@@ -1,0 +1,490 @@
+
+ <script>
+         @{
+            ViewData["Title"] = ViewBag.Title;
+            var certificateType = (string)ViewBag.CertificateType;
+            var certificateTypeName = (string)ViewBag.CertificateTypeName;
+        }
+
+        function loadGraduationYears() {
+            $.getJSON('/Certificate/GetGraduationYears', { certificateType: certificateType }, function (res) {
+                const $sel = $('#GraduationYear');
+                $sel.empty().append('<option value="">全部届</option>');
+                if (!res) return;
+                res.forEach(function (y) {
+                    $sel.append(`<option value="${y}">${y}</option>`);
+                });
+
+            // pdf modal print button
+            $('#pdfPrintBtn').on('click', function () {
+                const iframe = document.getElementById('pdfIframe');
+                if (!iframe || !iframe.contentWindow) {
+                    alert('无法打印：未加载 PDF');
+                    return;
+                }
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (err) {
+                    alert('打印失败，请在查看器中使用打印按钮。');
+                }
+            });
+            });
+        }
+
+        function loadInstitutes(year) {
+            $.getJSON('/Certificate/GetInstitutes', { certificateType: certificateType, graduationYear: year }, function (res) {
+                const $sel = $('#Institute');
+                $sel.empty().append('<option value="">全部学院</option>');
+                if (!res) return;
+                res.forEach(function (v) {
+                    $sel.append(`<option value="${v}">${v}</option>`);
+                });
+            });
+        }
+
+        function loadMajors(year, institute) {
+            $.getJSON('/Certificate/GetMajors', { certificateType: certificateType, graduationYear: year, institute: institute }, function (res) {
+                const $sel = $('#Major');
+                $sel.empty().append('<option value="">全部专业</option>');
+                if (!res) return;
+                res.forEach(function (v) {
+                    $sel.append(`<option value="${v}">${v}</option>`);
+                });
+            });
+        }
+
+        function loadClasses(year, institute, major) {
+            $.getJSON('/Certificate/GetClasses', { certificateType: certificateType, graduationYear: year, institute: institute, major: major }, function (res) {
+                const $sel = $('#ClassName');
+                $sel.empty().append('<option value="">全部班级</option>');
+                if (!res) return;
+                res.forEach(function (v) {
+                    $sel.append(`<option value="${v}">${v}</option>`);
+                });
+            });
+        }
+ </script>
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">筛选</h3>
+                <div class="card-tools">
+                    <button class="btn btn-tool" type="button" data-toggle="collapse" data-target="#filterCardBody">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="filterCardBody" class="collapse show">
+                <div class="card-body">
+                    <form id="filterForm" class="form-row">
+                        <div class="form-group col-md-2">
+                            <select name="GraduationYear" id="GraduationYear" class="form-control">
+                                <option value="">全部届</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <select name="Institute" id="Institute" class="form-control">
+                                <option value="">全部学院</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <select name="Major" id="Major" class="form-control">
+                                <option value="">全部专业</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <select name="ClassName" id="ClassName" class="form-control">
+                                <option value="">全部班级</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <input type="text" name="StudentIdOrName" id="StudentIdOrName" class="form-control" placeholder="学号/姓名" />
+                        </div>
+                        <div class="form-group col-md-1 d-flex align-items-center">
+                            <button type="button" id="searchBtn" class="btn btn-primary btn-block"><i class="fas fa-search"></i> 搜索</button>
+                        </div>
+                        <div class="form-group col-md-1 d-flex align-items-center">
+                            <button type="button" id="resetBtn" class="btn btn-secondary btn-block"><i class="fas fa-undo"></i> 重置</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center">
+                <div class="card-title h5 m-0">学生证书列表</div>
+                <div class="card-tools ml-auto ms-auto">
+                    <button id="printSelectedBtn" class="btn btn-info mr-2"><i class="fas fa-check-square"></i> 打印选中</button>
+                    <button id="printAllBtn" class="btn btn-success"><i class="fas fa-print"></i> 打印全部</button>
+                </div>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-bordered table-hover" id="certificateTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAll" /></th>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>班级</th>
+                            <th>专业</th>
+                            <th>学院</th>
+                            <th>毕业届</th>
+                            <th>证书编号</th>
+                            <th style="width:120px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex align-items-center">
+                <div class="me-auto">
+                    <div class="input-group-sm  d-flex align-items-center ">
+                        <span> 每页 </span>
+                        <select id="pageSizeSelect" class="form-control select2" style="width:60px;margin-left:3px;margin-right:3px;">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span  >条</span>
+                    </div>
+                </div>
+                <div class="flex-grow-1 d-flex justify-content-center">
+                    <nav>
+                        <ul id="pagination" class="pagination mb-0"></ul>
+                    </nav>
+                </div>
+                <div class="ms-auto">共 <span id="totalCount">0</span> 条</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PDF Preview Modal -->
+<div class="modal fade" id="pdfPreviewModal" tabindex="-1" role="dialog" aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="pdfPreviewModalLabel">证书预览</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe id="pdfIframe" src="" style="width:100%;height:80vh;border:0;"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="pdfPrintBtn"><i class="fas fa-print"></i> 打印</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+    <script>
+        const certificateType = '@certificateType';
+        let pageSize = 10;
+        let pageIndex = 1;
+        let totalCount = 0;
+        let batchTaskId = null;
+        let batchPollTimer = null;
+
+        function buildQuery(page) {
+            return {
+                CertificateType: certificateType,
+                StudentIdOrName: $('#StudentIdOrName').val(),
+                ClassName: $('#ClassName').val(),
+                Major: $('#Major').val(),
+                Institute: $('#Institute').val(),
+                GraduationYear: $('#GraduationYear').val(),
+                PageIndex: page || 1,
+                PageSize: pageSize
+            };
+        }
+
+        function loadData(page) {
+            const query = buildQuery(page);
+            $.ajax({
+                url: '/Certificate/GetList',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(query),
+                success: function (res) {
+                    totalCount = res.total || 0;
+                    pageIndex = query.PageIndex;
+                    $('#totalCount').text(totalCount);
+                    renderTable(res.data || []);
+                    renderPagination(totalCount, pageIndex);
+                },
+                error: function () {
+                    alert('数据加载失败');
+                }
+            });
+        }
+
+        function renderTable(items) {
+            const $tbody = $('#certificateTable tbody');
+            $tbody.empty();
+            if (!items || items.length === 0) {
+                $tbody.append('<tr><td colspan="10" class="text-center text-muted">暂无数据</td></tr>');
+                return;
+            }
+
+            for (let i = 0; i < items.length; i++) {
+                const it = items[i];
+                const tr = $('<tr></tr>');
+                tr.append(`<td><input type="checkbox" class="row-checkbox" value="${it.id}" /></td>`);
+                tr.append(`<td>${it.studentId || ''}</td>`);
+                tr.append(`<td>${it.name || ''}</td>`);
+                tr.append(`<td>${it.gender || ''}</td>`);
+                tr.append(`<td>${it.className || ''}</td>`);
+                tr.append(`<td>${it.major || ''}</td>`);
+                tr.append(`<td>${it.institute || ''}</td>`);
+                tr.append(`<td>${it.graduationYear || ''}</td>`);
+                tr.append(`<td>${it.certificateNumber || ''}</td>`);
+                tr.append(`<td><button class="btn btn-sm btn-info preview-btn" data-id="${it.id}"><i class="fas fa-file-pdf"></i> 预览</button></td>`);
+                $tbody.append(tr);
+            }
+        }
+
+        function renderPagination(total, page) {
+            const totalPages = Math.max(1, Math.ceil((total || 0) / pageSize));
+            const $p = $('#pagination');
+            $p.empty();
+
+            const createLi = (text, idx, disabled, active) => {
+                const li = $('<li class="page-item"></li>');
+                if (disabled) li.addClass('disabled');
+                if (active) li.addClass('active');
+                const a = $(`<a class="page-link" href="#">${text}</a>`);
+                a.data('page', idx);
+                li.append(a);
+                return li;
+            };
+
+            $p.append(createLi('首页', 1, page === 1, false));
+            $p.append(createLi('上一页', Math.max(1, page - 1), page === 1, false));
+
+            const start = Math.max(1, page - 2);
+            const end = Math.min(totalPages, page + 2);
+            for (let i = start; i <= end; i++) {
+                $p.append(createLi(i, i, false, i === page));
+            }
+
+            $p.append(createLi('下一页', Math.min(totalPages, page + 1), page === totalPages, false));
+            $p.append(createLi('尾页', totalPages, page === totalPages, false));
+        }
+
+        function getSelectedIds() {
+            const ids = [];
+            $('#certificateTable tbody').find('input.row-checkbox:checked').each(function () {
+                const id = parseInt($(this).val());
+                if (!isNaN(id)) ids.push(id);
+            });
+            return ids;
+        }
+
+        function startBatchPreview(printMode) {
+            const selectedIds = printMode === 'Selected' ? getSelectedIds() : [];
+            if (printMode === 'Selected' && selectedIds.length === 0) {
+                alert('请先勾选要打印的数据。');
+                return;
+            }
+
+            const payload = {
+                certificateType: certificateType,
+                printMode: printMode,
+                selectedIds: selectedIds,
+                filter: buildQuery(pageIndex)
+            };
+
+            $.ajax({
+                url: '/Certificate/BatchPreview/Start',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (res) {
+                    if (!res || !res.success || !res.taskId) {
+                        alert((res && res.message) || '创建批量任务失败');
+                        return;
+                    }
+
+                    batchTaskId = res.taskId;
+                    $('#pdfPreviewModalLabel').text('证书预览 - 正在生成，请稍候...');
+                    $('#pdfIframe').attr('src', 'about:blank');
+                    $('#pdfPreviewModal').modal('show');
+                    pollBatchStatus(batchTaskId);
+                },
+                error: function () {
+                    alert('创建批量任务失败');
+                }
+            });
+        }
+
+        function pollBatchStatus(taskId) {
+            if (batchPollTimer) {
+                clearInterval(batchPollTimer);
+                batchPollTimer = null;
+            }
+
+            const poll = function () {
+                $.getJSON(`/Certificate/BatchPreview/Status/${taskId}`, function (res) {
+                    if (!res || !res.success) {
+                        return;
+                    }
+
+                    const status = (res.status || '').toLowerCase();
+                    if (status === 'processing' || status === 'pending') {
+                        $('#pdfPreviewModalLabel').text(`证书预览 - 正在处理 ${res.processed || 0}/${res.total || 0}`);
+                        return;
+                    }
+
+                    if (batchPollTimer) {
+                        clearInterval(batchPollTimer);
+                        batchPollTimer = null;
+                    }
+
+                    if (status === 'completed' && res.url) {
+                        const fileUrl = res.url + (res.url.indexOf('?') === -1 ? '?' : '&') + '_=' + Date.now();
+                        const viewer = '/lib/pdfjs/web/viewer.html?file=' + encodeURIComponent(fileUrl);
+                        $('#pdfIframe').attr('src', viewer);
+                        $('#pdfPreviewModalLabel').text('证书预览 - 批量证书已生成');
+                    } else {
+                        alert(res.message || '批量任务处理失败');
+                    }
+                });
+            };
+
+            poll();
+            batchPollTimer = setInterval(poll, 2000);
+        }
+
+        $(function () {
+            // initialize page size from selector
+            const initialPageSize = parseInt($('#pageSizeSelect').val());
+            if (!isNaN(initialPageSize) && initialPageSize > 0) pageSize = initialPageSize;
+
+            loadData(1);
+
+            // handle page size change
+            $('#pageSizeSelect').on('change', function () {
+                const v = parseInt($(this).val());
+                pageSize = isNaN(v) || v <= 0 ? 10 : v;
+                loadData(1);
+            });
+
+            // cascading selects: load graduation years first
+            loadGraduationYears();
+
+            // search/reset
+            $('#searchBtn').on('click', function () {
+                loadData(1);
+            });
+            $('#resetBtn').on('click', function () {
+                $('#filterForm')[0].reset();
+                // reload graduation years to repopulate downstream selects
+                loadGraduationYears();
+                loadData(1);
+            });
+
+            // change handlers for cascading selects
+            $('#GraduationYear').on('change', function () {
+                const y = $(this).val();
+                // reset downstream
+                $('#Institute').empty().append('<option value="">全部学院</option>');
+                $('#Major').empty().append('<option value="">全部专业</option>');
+                $('#ClassName').empty().append('<option value="">全部班级</option>');
+                if (y) loadInstitutes(y);
+            });
+
+            $('#Institute').on('change', function () {
+                const y = $('#GraduationYear').val();
+                const inst = $(this).val();
+                $('#Major').empty().append('<option value="">全部专业</option>');
+                $('#ClassName').empty().append('<option value="">全部班级</option>');
+                if (inst) loadMajors(y, inst);
+            });
+
+            $('#Major').on('change', function () {
+                const y = $('#GraduationYear').val();
+                const inst = $('#Institute').val();
+                const major = $(this).val();
+                $('#ClassName').empty().append('<option value="">全部班级</option>');
+                if (major) loadClasses(y, inst, major);
+            });
+
+            // pagination click
+            $('#pagination').on('click', 'a.page-link', function (e) {
+                e.preventDefault();
+                const p = $(this).data('page');
+                if (p && p !== pageIndex) loadData(p);
+            });
+
+            // select all
+            $('#selectAll').on('change', function () {
+                const checked = $(this).is(':checked');
+                $('#certificateTable tbody').find('input.row-checkbox').prop('checked', checked);
+            });
+
+            // preview with PDF.js viewer in modal
+            $('#certificateTable').on('click', '.preview-btn', function (e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                $.getJSON(`/Certificate/${certificateType}/Preview/${id}`, function (res) {
+                    if (!res || !res.success || !res.url) {
+                        alert('预览失败');
+                        return;
+                    }
+                    batchTaskId = null;
+                    const origin = window.location.origin;
+                    const pdfUrl = origin + res.url + (res.url.indexOf('?') === -1 ? '?' : '&') + '_=' + Date.now();
+                    const viewer = origin+'/lib/pdfjs/web/viewer.html?file=' + encodeURIComponent(pdfUrl);
+                    $('#pdfIframe').attr('src', viewer);
+                    $('#pdfPreviewModalLabel').text('证书预览 - ' + (res.name || ''));
+                    $('#pdfPreviewModal').modal('show');
+                }).fail(function () {
+                    alert('无法获取预览地址');
+                });
+            });
+
+            // batch preview/print buttons
+            $('#printSelectedBtn').on('click', function () {
+                startBatchPreview('Selected');
+            });
+
+            $('#printAllBtn').on('click', function () {
+                startBatchPreview('All');
+            });
+
+            // pdf modal print button (record actual print for batch mode)
+            $('#pdfPrintBtn').on('click', function () {
+                const iframe = document.getElementById('pdfIframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                }
+
+                if (batchTaskId) {
+                    $.ajax({
+                        url: '/Certificate/BatchPreview/Record',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ taskId: batchTaskId, actionType: 'Print' })
+                    });
+                }
+            });
+
+            $('#pdfPreviewModal').on('hidden.bs.modal', function () {
+                if (batchPollTimer) {
+                    clearInterval(batchPollTimer);
+                    batchPollTimer = null;
+                }
+            });
+        });
+    </script>
+}

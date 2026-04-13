@@ -1,0 +1,39 @@
+@model CertificateSystem.Web.Models.CreateRoleViewModel
+@{
+    ViewData["Title"] = "新增角色";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-primary card-outline">
+            <div class="card-header"><h3 class="card-title">新增角色</h3></div>
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="card-body">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="form-group">
+                        <label asp-for="Name"></label>
+                        <input asp-for="Name" class="form-control" placeholder="请输入角色名称" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="DataScope">数据范围</label>
+                        <select asp-for="DataScope" class="form-control">
+                            <option value="Institute">本学院数据</option>
+                            <option value="All">全部数据</option>
+                        </select>
+                        <span asp-validation-for="DataScope" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>
+                    <a asp-action="Index" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

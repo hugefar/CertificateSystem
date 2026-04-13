@@ -1,0 +1,154 @@
+@model CertificateSystem.Web.Models.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "用户登录";
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css" />
+    <link rel="stylesheet" href="~/dist/css/adminlte.min.css" />
+    <style>
+        body.login-page {
+            background: url('/dist/img/loginbg.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .login-card-body {
+            border-radius: .5rem;
+        }
+
+        .captcha-img {
+            width: 110px;
+            height: 38px;
+            border: 1px solid #ced4da;
+            cursor: pointer;
+            object-fit: cover;
+            border-radius: .25rem;
+        }
+
+        .login-card-body .input-group .input-group-prepend .input-group-text {
+            height: calc(2.25rem + 2px);
+            border: 1px solid #ced4da;
+            border-right: 0;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-card-body .input-group .form-control {
+            height: calc(2.25rem + 2px);
+            border-left: 1px solid #ced4da;
+        }
+
+        .login-card-body .input-group .form-control:focus {
+            position: relative;
+            z-index: 3;
+        }
+    </style>
+</head>
+<body class="hold-transition login-page">
+    <div class="login-box">
+        <div class="card card-outline card-primary">
+            <div class="card-header text-center">
+                <a href="/" class="h3"><b>证书打印</b>系统</a>
+            </div>
+            <div class="card-body login-card-body">
+                <p class="login-box-msg">管理员登录</p>
+
+                <form asp-action="Login" asp-controller="Account" method="post" id="loginForm">
+                    @Html.AntiForgeryToken()
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        </div>
+                        <input asp-for="Username" class="form-control" placeholder="用户名" autocomplete="username" />
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        </div>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="密码" autocomplete="current-password" />
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-shield-alt"></i></span>
+                        </div>
+                        <input asp-for="Captcha" class="form-control" placeholder="验证码" autocomplete="off" />
+                        <div class="input-group-append">
+                            <img id="captchaImg" class="captcha-img" src="/Account/Captcha" alt="验证码" title="点击刷新验证码" />
+                        </div>
+                    </div>
+                    <input asp-for="ReturnUrl" type="hidden" />
+                    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="icheck-primary">
+                                <input asp-for="RememberMe" type="checkbox" id="rememberMe" />
+                                <label for="rememberMe">记住我</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-sign-in-alt mr-1"></i> 登录
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function refreshCaptcha() {
+            $.ajax({
+                url: '/Account/Captcha',
+                method: 'GET',
+                cache: false,
+                xhr: function () {
+                    var xhr = new window.XMLHttpRequest();
+                    xhr.responseType = 'blob';
+                    return xhr;
+                },
+                success: function (blob) {
+                    var imgUrl = URL.createObjectURL(blob);
+                    $('#captchaImg').attr('src', imgUrl);
+                },
+                error: function () {
+                    $('#captchaImg').attr('src', '/Account/Captcha?' + new Date().getTime());
+                }
+            });
+        }
+
+        $('#captchaImg, #btnRefreshCaptcha').on('click', function () {
+            refreshCaptcha();
+        });
+
+        $('#loginForm').on('submit', function (e) {
+            var username = $.trim($('#Username').val());
+            var password = $.trim($('#Password').val());
+            var captcha = $.trim($('#Captcha').val());
+
+            if (!username || !password || !captcha) {
+                e.preventDefault();
+                alert('用户名、密码和验证码不能为空。');
+                if (!username) {
+                    $('#Username').focus();
+                } else if (!password) {
+                    $('#Password').focus();
+                } else {
+                    $('#Captcha').focus();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

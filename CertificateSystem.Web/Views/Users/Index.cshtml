@@ -1,0 +1,161 @@
+@model CertificateSystem.Web.Models.UserListViewModel
+@{
+    ViewData["Title"] = "用户管理";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["SuccessMessage"]
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["ErrorMessage"]
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">筛选条件</h3>
+            </div>
+            <div class="card-body">
+                <form method="get" asp-action="Index" class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>职工号</label>
+                        <input type="text" name="jobNum" value="@Model.JobNum" class="form-control" placeholder="请输入职工号" />
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>真实姓名</label>
+                        <input type="text" name="fullName" value="@Model.FullName" class="form-control" placeholder="请输入姓名" />
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>部门</label>
+                        <select class="form-control" name="department">
+                            <option value="">全部</option>
+                            @foreach (var dep in Model.DepartmentOptions)
+                            {
+                                <option value="@dep.Value" selected="@(dep.Value == Model.Department)">@dep.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>状态</label>
+                        <select class="form-control" name="status">
+                            <option value="">全部</option>
+                            <option value="Active" selected="@(Model.Status == "Active")">启用</option>
+                            <option value="Inactive" selected="@(Model.Status == "Inactive")">禁用</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary mr-2"><i class="fas fa-search"></i> 搜索</button>
+                        <a asp-action="Create" class="btn btn-success"><i class="fas fa-user-plus"></i> 新增</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">用户列表</h3>
+            </div>
+            <div class="card-body">
+                <table id="usersTable" class="table table-bordered table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>职工号</th>
+                            <th>真实姓名</th>
+                            <th>部门</th>
+                            <th>角色</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th style="width: 360px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td>@user.JobNum</td>
+                                <td>@user.FullName</td>
+                                <td>@user.Department</td>
+                                <td>@user.Roles</td>
+                                <td>
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="badge badge-success">启用</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">禁用</span>
+                                    }
+                                </td>
+                                <td>@user.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-info"><i class="fas fa-edit"></i> 编辑</a>
+
+                                    <form asp-action="ResetPassword" method="post" class="d-inline" onsubmit="return onResetPasswordSubmit(this);">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <input type="hidden" name="newPassword" value="" class="new-password" />
+                                        <button type="submit" class="btn btn-sm btn-warning"><i class="fas fa-key"></i> 重置密码</button>
+                                    </form>
+
+                                    <form asp-action="ToggleStatus" method="post" class="d-inline" onsubmit="return confirm('确认切换该用户状态吗？');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-secondary" : "btn-success")">
+                                            <i class="fas @(user.IsActive ? "fa-user-slash" : "fa-user-check")"></i>
+                                            @(user.IsActive ? "禁用" : "启用")
+                                        </button>
+                                    </form>
+
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('确认删除该用户吗？删除为软删除（禁用）');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> 删除</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(function () {
+            $('#usersTable').DataTable({
+                paging: true,
+                searching: false,
+                ordering: true,
+                info: true,
+                autoWidth: false,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/zh-HANS.json'
+                }
+            });
+        });
+
+        function onResetPasswordSubmit(form) {
+            var pwd = prompt('请输入新密码（留空使用默认 Admin@123456）：', 'Admin@123456');
+            if (pwd === null) return false;
+            $(form).find('.new-password').val(pwd);
+            return confirm('确认重置该用户密码吗？');
+        }
+    </script>
+}

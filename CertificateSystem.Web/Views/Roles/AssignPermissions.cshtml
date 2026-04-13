@@ -1,0 +1,84 @@
+@model CertificateSystem.Web.Models.RolePermissionViewModel
+@{
+    ViewData["Title"] = "角色权限分配";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">角色：@Model.RoleName</h3>
+            </div>
+            <form asp-action="AssignPermissions" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="RoleId" type="hidden" />
+
+                <div class="card-body">
+                    @if (Model.Groups.Count == 0)
+                    {
+                        <div class="text-muted">暂无可分配权限</div>
+                    }
+                    else
+                    {
+                        @for (var i = 0; i < Model.Groups.Count; i++)
+                        {
+                            var group = Model.Groups[i];
+                            <div class="card card-outline card-secondary mb-3">
+                                <div class="card-header">
+                                    <strong>@group.Category</strong>
+                                    <div class="float-right">
+                                        <a href="javascript:void(0)" class="mr-2 js-select-group" data-target="group_@i">全选</a>
+                                        <a href="javascript:void(0)" class="js-unselect-group" data-target="group_@i">取消全选</a>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="group_@i">
+                                        @for (var j = 0; j < group.Permissions.Count; j++)
+                                        {
+                                            var p = group.Permissions[j];
+                                            <div class="col-md-4 mb-2">
+                                                <div class="custom-control custom-checkbox">
+                                                    <input type="checkbox"
+                                                           class="custom-control-input"
+                                                           id="perm_@p.Id"
+                                                           name="PermissionIds"
+                                                           value="@p.Id"
+                                                           @(p.IsSelected ? "checked" : null) />
+                                                    <label class="custom-control-label" for="perm_@p.Id">
+                                                        @p.Name
+                                                        <small class="text-muted">(@p.Code)</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存权限</button>
+                    <a asp-action="Index" class="btn btn-secondary">返回</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('.js-select-group').on('click', function () {
+                var target = $(this).data('target');
+                $('#' + target).find('input[type=checkbox]').prop('checked', true);
+            });
+
+            $('.js-unselect-group').on('click', function () {
+                var target = $(this).data('target');
+                $('#' + target).find('input[type=checkbox]').prop('checked', false);
+            });
+        });
+    </script>
+}

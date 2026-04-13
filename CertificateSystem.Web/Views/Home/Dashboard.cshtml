@@ -1,0 +1,142 @@
+@model CertificateSystem.Web.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "首页统计看板";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3 id="totalPrintCount">@Model.TotalPrintCount</h3>
+                        <p>总打印量</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-print"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3 id="activeYearPrintCount">@Model.ActiveYearPrintCount</h3>
+                        <p>当年打印量</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-chart-line"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3 id="departmentCount">@Model.DepartmentCount</h3>
+                        <p>学院/部门数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-university"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3 id="yearCount">@Model.YearCount</h3>
+                        <p>统计年份数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-calendar-alt"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">打印量统计报表</h3>
+                <div class="card-tools d-flex align-items-center" style="gap:8px;">
+                    <select id="yearFilter" class="form-control form-control-sm" style="min-width:120px;">
+                        <option value="">全部年度</option>
+                        @foreach (var y in Model.Years)
+                        {
+                            <option value="@y" selected="@(Model.SelectedYear == y)">@y</option>
+                        }
+                    </select>
+                    <select id="departmentFilter" class="form-control form-control-sm" style="min-width:150px;">
+                        <option value="">全部学院</option>
+                        @foreach (var d in Model.Departments)
+                        {
+                            <option value="@d" selected="@(Model.SelectedDepartment == d)">@d</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height: 420px;">
+                    <canvas id="dashboardChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+    <script>
+        let chart;
+
+        function getQuery() {
+            return {
+                year: $('#yearFilter').val(),
+                department: $('#departmentFilter').val()
+            };
+        }
+
+        function buildTitle(query) {
+            if (query.department) {
+                return query.department + ' 按年度打印量统计';
+            }
+            if (query.year) {
+                return query.year + ' 年各学院打印量统计';
+            }
+            return '各学院打印量统计';
+        }
+
+        function loadChart() {
+            const query = getQuery();
+            $.get('/Home/GetChartData', query, function (res) {
+                const labels = res.labels || [];
+                const values = res.values || [];
+
+                if (!chart) {
+                    const ctx = document.getElementById('dashboardChart').getContext('2d');
+                    chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: buildTitle(query),
+                                data: values,
+                                backgroundColor: 'rgba(54, 162, 235, 0.55)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                yAxes: [{ ticks: { beginAtZero: true } }]
+                            }
+                        }
+                    });
+                } else {
+                    chart.data.labels = labels;
+                    chart.data.datasets[0].label = buildTitle(query);
+                    chart.data.datasets[0].data = values;
+                    chart.update();
+                }
+            });
+        }
+
+        $(function () {
+            loadChart();
+            $('#yearFilter,#departmentFilter').on('change', function () {
+                loadChart();
+            });
+        });
+    </script>
+}
