@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="CertificateSystem.BLL/CertificateSystem.BLL.csproj" />
+  <Project Path="CertificateSystem.DAL/CertificateSystem.DAL.csproj" />
+  <Project Path="CertificateSystem.DBUtility/CertificateSystem.DBUtility.csproj" />
+  <Project Path="CertificateSystem.Model/CertificateSystem.Model.csproj" />
+  <Project Path="CertificateSystem.Web/CertificateSystem.Web.csproj" />
+</Solution>
