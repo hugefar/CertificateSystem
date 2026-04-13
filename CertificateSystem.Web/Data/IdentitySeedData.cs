@@ -1,4 +1,5 @@
 using CertificateSystem.Web.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 
 namespace CertificateSystem.Web.Data
@@ -9,6 +10,7 @@ namespace CertificateSystem.Web.Data
         {
             var roleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
             var roles = new[] { "Admin", "Operator" };
             foreach (var roleName in roles)
@@ -51,6 +53,22 @@ namespace CertificateSystem.Web.Data
             if (!await userManager.IsInRoleAsync(admin, "Admin"))
             {
                 await userManager.AddToRoleAsync(admin, "Admin");
+            }
+
+            var adminRole = await roleManager.FindByNameAsync("Admin");
+            var securityLogPermission = await dbContext.Permissions.FirstOrDefaultAsync(x => x.Code == "SecurityLog.View");
+            if (adminRole != null && securityLogPermission != null)
+            {
+                var exists = await dbContext.RolePermissions.AnyAsync(x => x.RoleId == adminRole.Id && x.PermissionId == securityLogPermission.Id);
+                if (!exists)
+                {
+                    dbContext.RolePermissions.Add(new Entities.RolePermission
+                    {
+                        RoleId = adminRole.Id,
+                        PermissionId = securityLogPermission.Id
+                    });
+                    await dbContext.SaveChangesAsync();
+                }
             }
 
             var testUserName = "operator";

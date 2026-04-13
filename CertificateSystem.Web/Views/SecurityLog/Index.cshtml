@@ -1,0 +1,206 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "安全日志";
+    var operationTypes = ViewBag.OperationTypes as List<SelectListItem> ?? new List<SelectListItem>();
+    var operationModules = ViewBag.OperationModules as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<div class="card card-primary card-outline">
+    <div class="card-header">
+        <h3 class="card-title">筛选</h3>
+    </div>
+    <div class="card-body">
+        <form id="filterForm" class="form-row">
+            <div class="form-group col-md-2">
+                <select id="OperationType" class="form-control">
+                    <option value="">全部操作类型</option>
+                    @foreach (var item in operationTypes)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group col-md-2">
+                <select id="OperationModule" class="form-control">
+                    <option value="">全部操作模块</option>
+                    @foreach (var item in operationModules)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group col-md-2">
+                <input id="OperatorName" class="form-control" placeholder="操作人" />
+            </div>
+            <div class="form-group col-md-2">
+                <input id="Keyword" class="form-control" placeholder="关键字" />
+            </div>
+            <div class="form-group col-md-2">
+                <input id="StartDate" type="date" class="form-control" />
+            </div>
+            <div class="form-group col-md-2">
+                <input id="EndDate" type="date" class="form-control" />
+            </div>
+            <div class="form-group col-md-12 d-flex justify-content-end">
+                <button type="button" id="searchBtn" class="btn btn-primary mr-2"><i class="fas fa-search"></i> 搜索</button>
+                <button type="button" id="resetBtn" class="btn btn-secondary"><i class="fas fa-undo"></i> 重置</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">安全日志列表</h3>
+    </div>
+    <div class="card-body table-responsive p-0">
+        <table class="table table-bordered table-hover" id="logTable">
+            <thead>
+                <tr>
+                    <th style="width:160px;">操作时间</th>
+                    <th style="width:130px;">操作类型</th>
+                    <th style="width:140px;">操作模块</th>
+                    <th>日志内容</th>
+                    <th style="width:120px;">操作人</th>
+                    <th style="width:140px;">IP地址</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center">
+        <div class="me-auto">
+            <div class="input-group-sm d-flex align-items-center">
+                <span>每页</span>
+                <select id="pageSizeSelect" class="form-control" style="width:70px;margin-left:4px;margin-right:4px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+                <span>条</span>
+            </div>
+        </div>
+        <div class="flex-grow-1 d-flex justify-content-center">
+            <nav>
+                <ul id="pagination" class="pagination mb-0"></ul>
+            </nav>
+        </div>
+        <div class="ms-auto">共 <span id="totalCount">0</span> 条</div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let pageIndex = 1;
+    let pageSize = 10;
+
+    function buildQuery(page) {
+        return {
+            operationType: $('#OperationType').val(),
+            operationModule: $('#OperationModule').val(),
+            operatorName: $('#OperatorName').val(),
+            keyword: $('#Keyword').val(),
+            startDate: $('#StartDate').val() || null,
+            endDate: $('#EndDate').val() || null,
+            pageIndex: page || 1,
+            pageSize: pageSize
+        };
+    }
+
+    function loadData(page) {
+        const query = buildQuery(page);
+        $.ajax({
+            url: '/SecurityLog/GetList',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(query),
+            success: function (res) {
+                pageIndex = query.pageIndex;
+                $('#totalCount').text(res.total || 0);
+                renderTable(res.data || []);
+                renderPagination(res.total || 0, pageIndex);
+            },
+            error: function () {
+                alert('数据加载失败');
+            }
+        });
+    }
+
+    function renderTable(items) {
+        const $tbody = $('#logTable tbody');
+        $tbody.empty();
+        if (!items || items.length === 0) {
+            $tbody.append('<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>');
+            return;
+        }
+
+        items.forEach(function (it) {
+            const createdAt = it.createdAt ? new Date(it.createdAt).toLocaleString() : '';
+            const tr = $('<tr></tr>');
+            tr.append(`<td>${createdAt}</td>`);
+            tr.append(`<td>${it.operationType || ''}</td>`);
+            tr.append(`<td>${it.operationModule || ''}</td>`);
+            tr.append(`<td>${it.content || ''}</td>`);
+            tr.append(`<td>${it.operatorName || ''}</td>`);
+            tr.append(`<td>${it.ipAddress || ''}</td>`);
+            $tbody.append(tr);
+        });
+    }
+
+    function renderPagination(total, page) {
+        const totalPages = Math.max(1, Math.ceil((total || 0) / pageSize));
+        const $p = $('#pagination');
+        $p.empty();
+
+        const createLi = (text, idx, disabled, active) => {
+            const li = $('<li class="page-item"></li>');
+            if (disabled) li.addClass('disabled');
+            if (active) li.addClass('active');
+            const a = $(`<a class="page-link" href="#">${text}</a>`);
+            a.data('page', idx);
+            li.append(a);
+            return li;
+        };
+
+        $p.append(createLi('首页', 1, page === 1, false));
+        $p.append(createLi('上一页', Math.max(1, page - 1), page === 1, false));
+
+        const start = Math.max(1, page - 2);
+        const end = Math.min(totalPages, page + 2);
+        for (let i = start; i <= end; i++) {
+            $p.append(createLi(i, i, false, i === page));
+        }
+
+        $p.append(createLi('下一页', Math.min(totalPages, page + 1), page === totalPages, false));
+        $p.append(createLi('尾页', totalPages, page === totalPages, false));
+    }
+
+    $(function () {
+        const initialPageSize = parseInt($('#pageSizeSelect').val());
+        if (!isNaN(initialPageSize) && initialPageSize > 0) pageSize = initialPageSize;
+
+        loadData(1);
+
+        $('#searchBtn').on('click', function () {
+            loadData(1);
+        });
+
+        $('#resetBtn').on('click', function () {
+            $('#filterForm')[0].reset();
+            loadData(1);
+        });
+
+        $('#pageSizeSelect').on('change', function () {
+            const v = parseInt($(this).val());
+            pageSize = isNaN(v) || v <= 0 ? 10 : v;
+            loadData(1);
+        });
+
+        $('#pagination').on('click', 'a.page-link', function (e) {
+            e.preventDefault();
+            const p = $(this).data('page');
+            if (p && p !== pageIndex) loadData(p);
+        });
+    });
+</script>
+}

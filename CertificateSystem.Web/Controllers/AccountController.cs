@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using Microsoft.AspNetCore.Authorization;
+using CertificateSystem.BLL;
 using CertificateSystem.Web.Identity;
 
 namespace CertificateSystem.Web.Controllers
@@ -14,11 +15,13 @@ namespace CertificateSystem.Web.Controllers
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogService _logService;
 
-        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogService logService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _logService = logService;
         }
 
         [AllowAnonymous]
@@ -41,6 +44,7 @@ namespace CertificateSystem.Web.Controllers
             var sessionCaptcha = HttpContext.Session.GetString("CaptchaCode");
             if (string.IsNullOrEmpty(sessionCaptcha) || string.IsNullOrEmpty(model.Captcha) || !string.Equals(sessionCaptcha, model.Captcha, System.StringComparison.OrdinalIgnoreCase))
             {
+                await WriteLogAsync("登录失败", "认证", $"用户 {model.Username} 登录失败：验证码错误");
                 ModelState.AddModelError(string.Empty, "验证码错误。请重新输入。");
                 return View(model);
             }
@@ -54,6 +58,7 @@ namespace CertificateSystem.Web.Controllers
             var user = await _userManager.FindByNameAsync(model.Username);
             if (user == null || !user.IsActive)
             {
+                await WriteLogAsync("登录失败", "认证", $"用户 {model.Username} 登录失败：账户不存在或已被禁用");
                 ModelState.AddModelError(string.Empty, "账户不存在或已被禁用。");
                 return View(model);
             }
@@ -63,6 +68,7 @@ namespace CertificateSystem.Web.Controllers
             {
                 user.LastLoginTime = DateTime.UtcNow;
                 await _userManager.UpdateAsync(user);
+                await _logService.LogAsync("登录成功", "认证", $"用户 {user.UserName} 登录成功", user.Id.ToString(), user.UserName ?? string.Empty, GetIpAddress());
 
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                     return Redirect(model.ReturnUrl);
@@ -72,10 +78,12 @@ namespace CertificateSystem.Web.Controllers
 
             if (result.IsLockedOut)
             {
+                await WriteLogAsync("登录失败", "认证", $"用户 {model.Username} 登录失败：账号已锁定", user.Id.ToString(), user.UserName);
                 ModelState.AddModelError(string.Empty, "账号已被锁定，请稍后再试。");
             }
             else
             {
+                await WriteLogAsync("登录失败", "认证", $"用户 {model.Username} 登录失败：用户名或密码错误", user.Id.ToString(), user.UserName);
                 ModelState.AddModelError(string.Empty, "用户名或密码错误。");
             }
 
@@ -86,8 +94,20 @@ namespace CertificateSystem.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            var user = await _userManager.GetUserAsync(User);
+            await WriteLogAsync("登出", "认证", $"用户 {user?.UserName ?? User.Identity?.Name} 已登出", user?.Id.ToString(), user?.UserName ?? User.Identity?.Name);
             await _signInManager.SignOutAsync();
             return RedirectToAction("Login", "Account");
+        }
+
+        private async Task WriteLogAsync(string operationType, string module, string content, string? userId = null, string? userName = null)
+        {
+            await _logService.LogAsync(operationType, module, content, userId ?? string.Empty, userName ?? string.Empty, GetIpAddress());
+        }
+
+        private string GetIpAddress()
+        {
+            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
         }
 
         [AllowAnonymous]

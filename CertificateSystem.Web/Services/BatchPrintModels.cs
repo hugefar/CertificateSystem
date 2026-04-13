@@ -31,6 +31,7 @@ namespace CertificateSystem.Web.Services
         public string TaskId { get; set; } = string.Empty;
         public string CertificateTypeKey { get; set; } = string.Empty;
         public string CertificateTypeName { get; set; } = string.Empty;
+        public BatchPrintMode Mode { get; set; } = BatchPrintMode.All;
         public BatchPrintTaskStatus Status { get; set; }
         public int TotalCount { get; set; }
         public int ProcessedCount { get; set; }

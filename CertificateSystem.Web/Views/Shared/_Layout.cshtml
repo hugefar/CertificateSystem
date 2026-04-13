@@ -177,10 +177,10 @@
                                 </a>
                             </li>
                         }
-                        @if (canViewSecurityLog)
+                        @if (canViewSecurityLog && User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a href="/SecurityLogs" class="nav-link">
+                                <a href="/SecurityLog" class="nav-link">
                                     <i class="nav-icon fas fa-shield-alt"></i>
                                     <p>安全日志</p>
                                 </a>

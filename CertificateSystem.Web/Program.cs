@@ -69,8 +69,10 @@ builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IStudentCertificateRepository, StudentCertificateRepository>();
+builder.Services.AddScoped<ISecurityLogRepository, SecurityLogRepository>();
 builder.Services.AddScoped<IDataScopeService, DataScopeService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<ICertificateGenerator, CertificateGenerator>();
 builder.Services.AddSingleton<IBatchPrintQueue, MemoryBatchPrintQueue>();
 builder.Services.AddHostedService<BatchPrintBackgroundService>();

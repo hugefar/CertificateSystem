@@ -19,6 +19,7 @@ namespace CertificateSystem.Web.Controllers
         private readonly ILogger<CertificateController> _logger;
         private readonly IBatchPrintQueue _batchPrintQueue;
         private readonly IPrintRecordService _printRecordService;
+        private readonly ILogService _logService;
 
         // Use the permission codes already seeded in the Permissions table (e.g. "Certificate.Graduation")
         // For now treat the same permission as both view and print to keep behavior consistent with seeded data.
@@ -37,7 +38,8 @@ namespace CertificateSystem.Web.Controllers
             IAuthorizationService authorizationService,
             ILogger<CertificateController> logger,
             IBatchPrintQueue batchPrintQueue,
-            IPrintRecordService printRecordService)
+            IPrintRecordService printRecordService,
+            ILogService logService)
         {
             _certificateService = certificateService;
             _certificateGenerator = certificateGenerator;
@@ -45,6 +47,7 @@ namespace CertificateSystem.Web.Controllers
             _logger = logger;
             _batchPrintQueue = batchPrintQueue;
             _printRecordService = printRecordService;
+            _logService = logService;
         }
 
         [HttpGet("GetGraduationYears")]
@@ -134,6 +137,7 @@ namespace CertificateSystem.Web.Controllers
 
             var entity = await _certificateService.GetByIdAsync(id);
             var url = Url.Action(nameof(GetPdfStream), "Certificate", new { id = id, certificateType = type });
+            await WriteLogAsync("证书预览", cfg.TypeName, $"预览{cfg.TypeName}：学号 {entity.StudentId}，姓名 {entity.Name}");
             return Json(new { success = true, url = url, name = entity?.Name ?? string.Empty });
         }
 
@@ -154,6 +158,7 @@ namespace CertificateSystem.Web.Controllers
             var fileName = $"{cfg.TypeName}_{entity?.StudentId}_{entity?.Name}.pdf";
             Response.Headers["Content-Disposition"] = BuildInlineContentDisposition(fileName);
             Response.ContentLength = stream.Length;
+            await WriteLogAsync("证书生成", cfg.TypeName, $"生成{cfg.TypeName}：学号 {entity.StudentId}，姓名 {entity.Name}");
 
             return new FileStreamResult(stream, "application/pdf");
         }
@@ -189,6 +194,8 @@ namespace CertificateSystem.Web.Controllers
                 Filter = filter,
                 OperatorName = User.Identity?.Name
             });
+
+            await WriteLogAsync("批量生成任务创建", cfg.TypeName, $"创建{cfg.TypeName}批量生成任务：模式 {mode}，数量 {(mode == BatchPrintMode.Selected ? request.SelectedIds?.Count ?? 0 : 0)}，任务号 {taskId}");
 
             return Json(new { success = true, taskId, message = "批量任务已提交，正在后台处理。" });
         }
@@ -295,6 +302,7 @@ namespace CertificateSystem.Web.Controllers
                 }
 
                 _batchPrintQueue.MarkPrinted(request.TaskId);
+                await WriteLogAsync("证书打印", snapshot.CertificateTypeName, $"批量打印{snapshot.CertificateTypeName}：模式 {snapshot.Mode}，{snapshot.TotalCount} 份，任务号 {request.TaskId}");
                 return Json(new { success = true });
             }
 
@@ -307,6 +315,7 @@ namespace CertificateSystem.Web.Controllers
 
             var entity = await _certificateService.GetByIdAsync(request.CertificateId.Value);
             await _printRecordService.SaveActualPrintRecordAsync(entity, singleCfg.TypeName, operatorUserId, request.Remark ?? "单个打印");
+            await WriteLogAsync("证书打印", singleCfg.TypeName, $"打印{singleCfg.TypeName}：学号 {entity.StudentId}，姓名 {entity.Name}");
 
             return Json(new { success = true });
         }
@@ -326,6 +335,7 @@ namespace CertificateSystem.Web.Controllers
 
             var result = await _certificateService.CreateBatchPrintTaskAsync(filter, cfg.TypeName, User.Identity?.Name);
             _logger.LogInformation("Batch print task created. TaskId={TaskId}, Type={Type}, Total={Total}", result.TaskId, cfg.TypeName, result.TotalCount);
+            await WriteLogAsync("批量生成任务创建", cfg.TypeName, $"创建{cfg.TypeName}批量打印任务：数量 {result.TotalCount}，任务号 {result.TaskId}");
 
             return Json(new
             {
@@ -354,6 +364,17 @@ namespace CertificateSystem.Web.Controllers
 
             var encoded = Uri.EscapeDataString(fileName);
             return $"inline; filename=\"{asciiFallback}\"; filename*=UTF-8''{encoded}";
+        }
+
+        private async Task WriteLogAsync(string operationType, string module, string content)
+        {
+            await _logService.LogAsync(
+                operationType,
+                module,
+                content,
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
+                User.Identity?.Name ?? string.Empty,
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
         }
 
 

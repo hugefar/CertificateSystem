@@ -3,10 +3,12 @@ using CertificateSystem.Web.Data.Entities;
 using CertificateSystem.Web.Authorization;
 using CertificateSystem.Web.Identity;
 using CertificateSystem.Web.Models;
+using CertificateSystem.BLL;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace CertificateSystem.Web.Controllers
 {
@@ -16,12 +18,14 @@ namespace CertificateSystem.Web.Controllers
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _dbContext;
+        private readonly ILogService _logService;
 
-        public RolesController(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext)
+        public RolesController(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext, ILogService logService)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _dbContext = dbContext;
+            _logService = logService;
         }
 
         [HttpGet]
@@ -97,6 +101,7 @@ namespace CertificateSystem.Web.Controllers
             }
 
             TempData["SuccessMessage"] = "角色创建成功。";
+            await LogAsync("创建角色", "角色管理", $"创建角色：{role.Name}");
             return RedirectToAction(nameof(Index));
         }
 
@@ -154,6 +159,7 @@ namespace CertificateSystem.Web.Controllers
             }
 
             TempData["SuccessMessage"] = "角色更新成功。";
+            await LogAsync("编辑角色", "角色管理", $"编辑角色：{role.Name}");
             return RedirectToAction(nameof(Index));
         }
 
@@ -186,6 +192,9 @@ namespace CertificateSystem.Web.Controllers
             TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Succeeded
                 ? "角色删除成功。"
                 : string.Join("；", result.Errors.Select(x => x.Description));
+
+            if (result.Succeeded)
+                await LogAsync("删除角色", "角色管理", $"删除角色：{role.Name}");
 
             return RedirectToAction(nameof(Index));
         }
@@ -279,6 +288,7 @@ namespace CertificateSystem.Web.Controllers
             await _dbContext.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "角色权限分配成功。";
+            await LogAsync("分配权限", "角色管理", $"为角色 {role.Name} 分配权限，共 {selectedIds.Count} 项");
             return RedirectToAction(nameof(Index));
         }
 
@@ -294,6 +304,17 @@ namespace CertificateSystem.Web.Controllers
             }
 
             return false;
+        }
+
+        private async Task LogAsync(string operationType, string module, string content)
+        {
+            await _logService.LogAsync(
+                operationType,
+                module,
+                content,
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
+                User.Identity?.Name ?? string.Empty,
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
         }
     }
 }

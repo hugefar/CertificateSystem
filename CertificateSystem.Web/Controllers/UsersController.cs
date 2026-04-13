@@ -1,11 +1,13 @@
 using CertificateSystem.Web.Identity;
 using CertificateSystem.Web.Models;
 using CertificateSystem.Web.Authorization;
+using CertificateSystem.BLL;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace CertificateSystem.Web.Controllers
 {
@@ -14,11 +16,13 @@ namespace CertificateSystem.Web.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly ILogService _logService;
 
-        public UsersController(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
+        public UsersController(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, ILogService logService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _logService = logService;
         }
 
         [HttpGet]
@@ -135,6 +139,7 @@ namespace CertificateSystem.Web.Controllers
             }
 
             TempData["SuccessMessage"] = "新增用户成功。";
+            await LogAsync("创建用户", "用户管理", $"创建用户：{user.UserName}（{user.FullName}）");
             return RedirectToAction(nameof(Index));
         }
 
@@ -218,6 +223,7 @@ namespace CertificateSystem.Web.Controllers
                 await _userManager.AddToRolesAsync(user, toAdd);
 
             TempData["SuccessMessage"] = "用户信息更新成功。";
+            await LogAsync("编辑用户", "用户管理", $"编辑用户：{user.UserName}（{user.FullName}）");
             return RedirectToAction(nameof(Index));
         }
 
@@ -241,6 +247,9 @@ namespace CertificateSystem.Web.Controllers
             TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Succeeded
                 ? "用户已禁用（软删除）。"
                 : "删除失败，请稍后重试。";
+
+            if (result.Succeeded)
+                await LogAsync("删除用户", "用户管理", $"禁用用户：{user.UserName}（{user.FullName}）");
 
             return RedirectToAction(nameof(Index));
         }
@@ -266,6 +275,9 @@ namespace CertificateSystem.Web.Controllers
                 ? (user.IsActive ? "用户已启用。" : "用户已禁用。")
                 : "状态切换失败，请稍后重试。";
 
+            if (result.Succeeded)
+                await LogAsync(user.IsActive ? "启用用户" : "禁用用户", "用户管理", $"{(user.IsActive ? "启用" : "禁用")}用户：{user.UserName}（{user.FullName}）");
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -288,6 +300,7 @@ namespace CertificateSystem.Web.Controllers
             if (result.Succeeded)
             {
                 TempData["SuccessMessage"] = $"密码已重置成功。新密码：{password}";
+                await LogAsync("重置密码", "用户管理", $"重置用户密码：{user.UserName}（{user.FullName}）");
             }
             else
             {
@@ -306,6 +319,17 @@ namespace CertificateSystem.Web.Controllers
                 Value = r.Id.ToString(),
                 Text = r.Name
             }));
+        }
+
+        private async Task LogAsync(string operationType, string module, string content)
+        {
+            await _logService.LogAsync(
+                operationType,
+                module,
+                content,
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
+                User.Identity?.Name ?? string.Empty,
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
         }
     }
 }
