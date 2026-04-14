@@ -74,10 +74,10 @@
                 }
                 else
                 {
-                    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-                    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-                    if (!string.Equals(currentController, "Account", System.StringComparison.OrdinalIgnoreCase)
-                        || !string.Equals(currentAction, "Login", System.StringComparison.OrdinalIgnoreCase))
+                    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+                    var act = ViewContext.RouteData.Values["action"]?.ToString();
+                    if (!string.Equals(ctrl, "Account", System.StringComparison.OrdinalIgnoreCase)
+                        || !string.Equals(act, "Login", System.StringComparison.OrdinalIgnoreCase))
                     {
                         <li class="nav-item">
                             <a class="nav-link" href="/Account/Login">登录</a>
@@ -112,21 +112,28 @@
                             var canViewUsers = (await AuthorizationService.AuthorizeAsync(User, null, new PermissionRequirement("User.View"))).Succeeded;
                             var canViewRoles = (await AuthorizationService.AuthorizeAsync(User, null, new PermissionRequirement("Role.View"))).Succeeded;
                             var canViewSecurityLog = (await AuthorizationService.AuthorizeAsync(User, null, new PermissionRequirement("SecurityLog.View"))).Succeeded;
+                            var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+                            var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+                            var currentType = ViewContext.RouteData.Values["type"]?.ToString() ?? string.Empty;
+
+                            Func<string, string> GetLinkClass = ctrl => string.Equals(currentController, ctrl, System.StringComparison.OrdinalIgnoreCase) ? "nav-link active" : "nav-link";
+                            Func<string, string, string> GetLinkClassForType = (ctrl, type) => string.Equals(currentController, ctrl, System.StringComparison.OrdinalIgnoreCase) && string.Equals(currentType, type, System.StringComparison.OrdinalIgnoreCase) ? "nav-link active" : "nav-link";
                         }
 
                         @if (canViewDashboard)
                         {
                             <li class="nav-item">
-                                <a href="/" class="nav-link">
+                                <a href="/" class="@GetLinkClass("Home")">
                                     <i class="nav-icon fas fa-home"></i>
                                     <p>首页</p>
                                 </a>
                             </li>
                         }
+                        <li class="nav-header">证书打印</li>
                         @if (canManageGraduation)
                         {
                             <li class="nav-item">
-                                <a href="/Certificate/Graduation" class="nav-link">
+                                <a href="/Certificate/Graduation" class="@GetLinkClassForType("Certificate","Graduation")">
                                     <i class="nav-icon fas fa-certificate"></i>
                                     <p>毕业证书</p>
                                 </a>
@@ -135,7 +142,7 @@
                         @if (canManageCompletion)
                         {
                             <li class="nav-item">
-                                <a href="/Certificate/Completion" class="nav-link">
+                                <a href="/Certificate/Completion" class="@GetLinkClassForType("Certificate","Completion")">
                                     <i class="nav-icon fas fa-award"></i>
                                     <p>结业证书</p>
                                 </a>
@@ -144,7 +151,7 @@
                         @if (canManageDegree)
                         {
                             <li class="nav-item">
-                                <a href="/Certificate/Degree" class="nav-link">
+                                <a href="/Certificate/Degree" class="@GetLinkClassForType("Certificate","Degree")">
                                     <i class="nav-icon fas fa-graduation-cap"></i>
                                     <p>学位证书</p>
                                 </a>
@@ -153,16 +160,17 @@
                         @if (canManageSecondDegree)
                         {
                             <li class="nav-item">
-                                <a href="/Certificate/SecondDegree" class="nav-link">
+                                <a href="/Certificate/SecondDegree" class="@GetLinkClassForType("Certificate","SecondDegree")">
                                     <i class="nav-icon fas fa-user-graduate"></i>
                                     <p>第二学位证书</p>
                                 </a>
                             </li>
                         }
+                        <li class="nav-header">系统设置</li>
                         @if (canViewUsers)
                         {
                             <li class="nav-item">
-                                <a href="/Users" class="nav-link">
+                                <a href="/Users" class="@GetLinkClass("Users")">
                                     <i class="nav-icon fas fa-users"></i>
                                     <p>用户管理</p>
                                 </a>
@@ -171,7 +179,7 @@
                         @if (canViewRoles)
                         {
                             <li class="nav-item">
-                                <a href="/Roles" class="nav-link">
+                                <a href="/Roles" class="@GetLinkClass("Roles")">
                                     <i class="nav-icon fas fa-user-tag"></i>
                                     <p>角色管理</p>
                                 </a>
@@ -180,7 +188,7 @@
                         @if (canViewSecurityLog && User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a href="/SecurityLog" class="nav-link">
+                                <a href="/SecurityLog" class="@GetLinkClass("SecurityLog")">
                                     <i class="nav-icon fas fa-shield-alt"></i>
                                     <p>安全日志</p>
                                 </a>
