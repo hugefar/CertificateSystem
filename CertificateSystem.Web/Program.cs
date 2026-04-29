@@ -44,8 +44,14 @@ var identityConnection = builder.Configuration.GetConnectionString("IdentityConn
 if (string.IsNullOrEmpty(identityConnection))
     throw new InvalidOperationException("Identity connection string not found. Add 'IdentityConnection' to appsettings.json.");
 
+
 builder.Services.AddDbContext<CertificateSystem.Web.Data.ApplicationDbContext>(options =>
-    options.UseSqlServer(identityConnection));
+    options.UseSqlServer(identityConnection,
+        // 核心配置：110 是SQL Server 2012（含R2）的官方兼容级别
+        o => o.UseCompatibilityLevel(110))
+    // 可选：调试用，输出生成的SQL到控制台，方便定位问题
+    .LogTo(Console.WriteLine, LogLevel.Information)
+    .EnableSensitiveDataLogging());
 
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
