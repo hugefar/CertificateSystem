@@ -3,6 +3,7 @@ using CertificateSystem.BLL;
 using CertificateSystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace CertificateSystem.Web.Controllers
 {
@@ -10,11 +11,15 @@ namespace CertificateSystem.Web.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IDashboardService _dashboardService;
+        private readonly IStudentSyncService _studentSyncService;
+        private readonly ILogService _logService;
 
-        public HomeController(ILogger<HomeController> logger, IDashboardService dashboardService)
+        public HomeController(ILogger<HomeController> logger, IDashboardService dashboardService, IStudentSyncService studentSyncService, ILogService logService)
         {
             _logger = logger;
             _dashboardService = dashboardService;
+            _studentSyncService = studentSyncService;
+            _logService = logService;
         }
 
         [PermissionAuthorize("Dashboard.View")]
@@ -54,6 +59,37 @@ namespace CertificateSystem.Web.Controllers
                 labels = points.Select(x => x.Label),
                 values = points.Select(x => x.Value)
             });
+        }
+
+        [HttpPost]
+        [PermissionAuthorize("Dashboard.View")]
+        public async Task<IActionResult> SyncStudentCertificates()
+        {
+            try
+            {
+                await _studentSyncService.SyncAsync();
+                await _logService.LogAsync(
+                    "手动同步",
+                    "学生证书同步",
+                    "手动触发学生证书同步成功。",
+                    User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
+                    User.Identity?.Name ?? string.Empty,
+                    HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
+
+                return Json(new { success = true, message = "学生证书同步成功。" });
+            }
+            catch (Exception ex)
+            {
+                await _logService.LogAsync(
+                    "手动同步失败",
+                    "学生证书同步",
+                    $"手动触发学生证书同步失败：{ex.Message}",
+                    User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
+                    User.Identity?.Name ?? string.Empty,
+                    HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
+
+                return Json(new { success = false, message = "学生证书同步失败：" + ex.Message });
+            }
         }
 
         public IActionResult Privacy()

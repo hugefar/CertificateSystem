@@ -36,9 +36,12 @@ namespace CertificateSystem.DAL
             var countSql = $"SELECT COUNT(1) FROM dbo.StudentCertificates {whereSql}";
 
             var pageSql = $@"
-SELECT Id, CertificateType, GraduationYear, Institute, Major, ClassName, StudentId, Name, Gender,
-       BirthDate, EnrollmentDate, GraduationDate, StudyYears, EducationLevel,
-       CertificateNumber, CertificateDate, PhotoPath, CreatedAt, UpdatedAt, SyncBatchId
+SELECT Id, CertificateType, GraduationYear, GraduationYearName, Institute, Major, ClassName, StudentId, Name, Gender,
+       Nation, PoliticalStatus, IdCardType, IdCardNo, ExamNo, StudyMode,
+       BirthDate, EnrollmentDate, GraduationDate, GraduationConclusion, StudyYears, EducationLevel,
+       CertificateNumber, CertificateDate, PhotoPath, IsDegreeAwarded, AwardedDegree, DegreeCertificateNumber,
+       DegreeAwardDate, Gpa, IsRegistered, AwardedDegreeCode, ZSZPB, XWZPB, XJZPB, BYZPB,
+       CreatedAt, UpdatedAt, SyncBatchId
 FROM dbo.StudentCertificates
 {whereSql}
 ORDER BY GraduationYear DESC, Institute ASC, Major ASC, ClassName ASC, StudentId ASC
@@ -82,9 +85,12 @@ FETCH NEXT @PageSize ROWS ONLY";
         public async Task<StudentCertificate> GetByIdAsync(long id)
         {
             const string sql = @"
-SELECT Id, CertificateType, GraduationYear, Institute, Major, ClassName, StudentId, Name, Gender,
-       BirthDate, EnrollmentDate, GraduationDate, StudyYears, EducationLevel,
-       CertificateNumber, CertificateDate, PhotoPath, CreatedAt, UpdatedAt, SyncBatchId
+SELECT Id, CertificateType, GraduationYear, GraduationYearName, Institute, Major, ClassName, StudentId, Name, Gender,
+       Nation, PoliticalStatus, IdCardType, IdCardNo, ExamNo, StudyMode,
+       BirthDate, EnrollmentDate, GraduationDate, GraduationConclusion, StudyYears, EducationLevel,
+       CertificateNumber, CertificateDate, PhotoPath, IsDegreeAwarded, AwardedDegree, DegreeCertificateNumber,
+       DegreeAwardDate, Gpa, IsRegistered, AwardedDegreeCode, ZSZPB, XWZPB, XJZPB, BYZPB,
+       CreatedAt, UpdatedAt, SyncBatchId
 FROM dbo.StudentCertificates
 WHERE Id = @Id";
 
@@ -110,9 +116,12 @@ WHERE Id = @Id";
 
             var topSql = top.HasValue && top.Value > 0 ? "TOP (@Top)" : string.Empty;
             var sql = $@"
-SELECT {topSql} Id, CertificateType, GraduationYear, Institute, Major, ClassName, StudentId, Name, Gender,
-       BirthDate, EnrollmentDate, GraduationDate, StudyYears, EducationLevel,
-       CertificateNumber, CertificateDate, PhotoPath, CreatedAt, UpdatedAt, SyncBatchId
+SELECT {topSql} Id, CertificateType, GraduationYear, GraduationYearName, Institute, Major, ClassName, StudentId, Name, Gender,
+       Nation, PoliticalStatus, IdCardType, IdCardNo, ExamNo, StudyMode,
+       BirthDate, EnrollmentDate, GraduationDate, GraduationConclusion, StudyYears, EducationLevel,
+       CertificateNumber, CertificateDate, PhotoPath, IsDegreeAwarded, AwardedDegree, DegreeCertificateNumber,
+       DegreeAwardDate, Gpa, IsRegistered, AwardedDegreeCode, ZSZPB, XWZPB, XJZPB, BYZPB,
+       CreatedAt, UpdatedAt, SyncBatchId
 FROM dbo.StudentCertificates
 {whereSql}
 ORDER BY GraduationYear DESC, Institute ASC, Major ASC, ClassName ASC, StudentId ASC";
@@ -228,13 +237,19 @@ ORDER BY GraduationYear DESC, Institute ASC, Major ASC, ClassName ASC, StudentId
 
             const string sql = @"
 INSERT INTO dbo.StudentCertificates
-(CertificateType, GraduationYear, Institute, Major, ClassName, StudentId, Name, Gender,
- BirthDate, EnrollmentDate, GraduationDate, StudyYears, EducationLevel,
- CertificateNumber, CertificateDate, PhotoPath, CreatedAt, UpdatedAt, SyncBatchId)
+(CertificateType, GraduationYear, GraduationYearName, Institute, Major, ClassName, StudentId, Name, Gender,
+ Nation, PoliticalStatus, IdCardType, IdCardNo, ExamNo, StudyMode,
+ BirthDate, EnrollmentDate, GraduationDate, GraduationConclusion, StudyYears, EducationLevel,
+ CertificateNumber, CertificateDate, PhotoPath, IsDegreeAwarded, AwardedDegree, DegreeCertificateNumber,
+ DegreeAwardDate, Gpa, IsRegistered, AwardedDegreeCode, ZSZPB, XWZPB, XJZPB, BYZPB,
+ CreatedAt, UpdatedAt, SyncBatchId)
 VALUES
-(@CertificateType, @GraduationYear, @Institute, @Major, @ClassName, @StudentId, @Name, @Gender,
- @BirthDate, @EnrollmentDate, @GraduationDate, @StudyYears, @EducationLevel,
- @CertificateNumber, @CertificateDate, @PhotoPath, @CreatedAt, @UpdatedAt, @SyncBatchId)";
+(@CertificateType, @GraduationYear, @GraduationYearName, @Institute, @Major, @ClassName, @StudentId, @Name, @Gender,
+ @Nation, @PoliticalStatus, @IdCardType, @IdCardNo, @ExamNo, @StudyMode,
+ @BirthDate, @EnrollmentDate, @GraduationDate, @GraduationConclusion, @StudyYears, @EducationLevel,
+ @CertificateNumber, @CertificateDate, @PhotoPath, @IsDegreeAwarded, @AwardedDegree, @DegreeCertificateNumber,
+ @DegreeAwardDate, @Gpa, @IsRegistered, @AwardedDegreeCode, @ZSZPB, @XWZPB, @XJZPB, @BYZPB,
+ @CreatedAt, @UpdatedAt, @SyncBatchId)";
 
             await using var conn = SqlHelper.CreateConnection();
             await conn.OpenAsync();
@@ -265,20 +280,39 @@ VALUES
 UPDATE dbo.StudentCertificates
 SET CertificateType = @CertificateType,
     GraduationYear = @GraduationYear,
+    GraduationYearName = @GraduationYearName,
     Institute = @Institute,
     Major = @Major,
     ClassName = @ClassName,
     StudentId = @StudentId,
     Name = @Name,
     Gender = @Gender,
+    Nation = @Nation,
+    PoliticalStatus = @PoliticalStatus,
+    IdCardType = @IdCardType,
+    IdCardNo = @IdCardNo,
+    ExamNo = @ExamNo,
+    StudyMode = @StudyMode,
     BirthDate = @BirthDate,
     EnrollmentDate = @EnrollmentDate,
     GraduationDate = @GraduationDate,
+    GraduationConclusion = @GraduationConclusion,
     StudyYears = @StudyYears,
     EducationLevel = @EducationLevel,
     CertificateNumber = @CertificateNumber,
     CertificateDate = @CertificateDate,
     PhotoPath = @PhotoPath,
+    IsDegreeAwarded = @IsDegreeAwarded,
+    AwardedDegree = @AwardedDegree,
+    DegreeCertificateNumber = @DegreeCertificateNumber,
+    DegreeAwardDate = @DegreeAwardDate,
+    Gpa = @Gpa,
+    IsRegistered = @IsRegistered,
+    AwardedDegreeCode = @AwardedDegreeCode,
+    ZSZPB = @ZSZPB,
+    XWZPB = @XWZPB,
+    XJZPB = @XJZPB,
+    BYZPB = @BYZPB,
     UpdatedAt = @UpdatedAt,
     SyncBatchId = @SyncBatchId
 WHERE Id = @Id";
@@ -351,20 +385,39 @@ WHERE Id = @Id";
                 Id = Convert.ToInt64(reader["Id"]),
                 CertificateType = reader["CertificateType"]?.ToString() ?? string.Empty,
                 GraduationYear = reader["GraduationYear"]?.ToString() ?? string.Empty,
+                GraduationYearName = reader["GraduationYearName"] == DBNull.Value ? null : reader["GraduationYearName"].ToString(),
                 Institute = reader["Institute"]?.ToString() ?? string.Empty,
                 Major = reader["Major"]?.ToString() ?? string.Empty,
                 ClassName = reader["ClassName"]?.ToString() ?? string.Empty,
                 StudentId = reader["StudentId"]?.ToString() ?? string.Empty,
                 Name = reader["Name"]?.ToString() ?? string.Empty,
                 Gender = reader["Gender"] == DBNull.Value ? null : reader["Gender"].ToString(),
+                Nation = reader["Nation"] == DBNull.Value ? null : reader["Nation"].ToString(),
+                PoliticalStatus = reader["PoliticalStatus"] == DBNull.Value ? null : reader["PoliticalStatus"].ToString(),
+                IdCardType = reader["IdCardType"] == DBNull.Value ? null : reader["IdCardType"].ToString(),
+                IdCardNo = reader["IdCardNo"] == DBNull.Value ? null : reader["IdCardNo"].ToString(),
+                ExamNo = reader["ExamNo"] == DBNull.Value ? null : reader["ExamNo"].ToString(),
+                StudyMode = reader["StudyMode"] == DBNull.Value ? null : reader["StudyMode"].ToString(),
                 BirthDate = reader["BirthDate"] == DBNull.Value ? null : Convert.ToDateTime(reader["BirthDate"]),
                 EnrollmentDate = reader["EnrollmentDate"] == DBNull.Value ? null : Convert.ToDateTime(reader["EnrollmentDate"]),
                 GraduationDate = reader["GraduationDate"] == DBNull.Value ? null : Convert.ToDateTime(reader["GraduationDate"]),
+                GraduationConclusion = reader["GraduationConclusion"] == DBNull.Value ? null : reader["GraduationConclusion"].ToString(),
                 StudyYears = reader["StudyYears"] == DBNull.Value ? null : Convert.ToInt32(reader["StudyYears"]),
                 EducationLevel = reader["EducationLevel"] == DBNull.Value ? null : reader["EducationLevel"].ToString(),
                 CertificateNumber = reader["CertificateNumber"] == DBNull.Value ? null : reader["CertificateNumber"].ToString(),
                 CertificateDate = reader["CertificateDate"] == DBNull.Value ? null : Convert.ToDateTime(reader["CertificateDate"]),
                 PhotoPath = reader["PhotoPath"] == DBNull.Value ? null : reader["PhotoPath"].ToString(),
+                IsDegreeAwarded = reader["IsDegreeAwarded"] == DBNull.Value ? null : reader["IsDegreeAwarded"].ToString(),
+                AwardedDegree = reader["AwardedDegree"] == DBNull.Value ? null : reader["AwardedDegree"].ToString(),
+                DegreeCertificateNumber = reader["DegreeCertificateNumber"] == DBNull.Value ? null : reader["DegreeCertificateNumber"].ToString(),
+                DegreeAwardDate = reader["DegreeAwardDate"] == DBNull.Value ? null : Convert.ToDateTime(reader["DegreeAwardDate"]),
+                Gpa = reader["Gpa"] == DBNull.Value ? null : reader["Gpa"].ToString(),
+                IsRegistered = reader["IsRegistered"] == DBNull.Value ? null : reader["IsRegistered"].ToString(),
+                AwardedDegreeCode = reader["AwardedDegreeCode"] == DBNull.Value ? null : reader["AwardedDegreeCode"].ToString(),
+                ZSZPB = reader["ZSZPB"] == DBNull.Value ? null : (byte[])reader["ZSZPB"],
+                XWZPB = reader["XWZPB"] == DBNull.Value ? null : (byte[])reader["XWZPB"],
+                XJZPB = reader["XJZPB"] == DBNull.Value ? null : (byte[])reader["XJZPB"],
+                BYZPB = reader["BYZPB"] == DBNull.Value ? null : (byte[])reader["BYZPB"],
                 CreatedAt = reader["CreatedAt"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(reader["CreatedAt"]),
                 UpdatedAt = reader["UpdatedAt"] == DBNull.Value ? null : Convert.ToDateTime(reader["UpdatedAt"]),
                 SyncBatchId = reader["SyncBatchId"] == DBNull.Value ? null : reader["SyncBatchId"].ToString()
@@ -385,20 +438,39 @@ WHERE Id = @Id";
 
             cmd.Parameters.Add(new SqlParameter("@CertificateType", e.CertificateType));
             cmd.Parameters.Add(new SqlParameter("@GraduationYear", e.GraduationYear));
+            cmd.Parameters.Add(new SqlParameter("@GraduationYearName", (object?)e.GraduationYearName ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@Institute", e.Institute));
             cmd.Parameters.Add(new SqlParameter("@Major", e.Major));
             cmd.Parameters.Add(new SqlParameter("@ClassName", e.ClassName));
             cmd.Parameters.Add(new SqlParameter("@StudentId", e.StudentId));
             cmd.Parameters.Add(new SqlParameter("@Name", e.Name));
             cmd.Parameters.Add(new SqlParameter("@Gender", (object?)e.Gender ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@Nation", (object?)e.Nation ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@PoliticalStatus", (object?)e.PoliticalStatus ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@IdCardType", (object?)e.IdCardType ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@IdCardNo", (object?)e.IdCardNo ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@ExamNo", (object?)e.ExamNo ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@StudyMode", (object?)e.StudyMode ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@BirthDate", (object?)e.BirthDate ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@EnrollmentDate", (object?)e.EnrollmentDate ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@GraduationDate", (object?)e.GraduationDate ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@GraduationConclusion", (object?)e.GraduationConclusion ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@StudyYears", (object?)e.StudyYears ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@EducationLevel", (object?)e.EducationLevel ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@CertificateNumber", (object?)e.CertificateNumber ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@CertificateDate", (object?)e.CertificateDate ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@PhotoPath", (object?)e.PhotoPath ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@IsDegreeAwarded", (object?)e.IsDegreeAwarded ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@AwardedDegree", (object?)e.AwardedDegree ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@DegreeCertificateNumber", (object?)e.DegreeCertificateNumber ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@DegreeAwardDate", (object?)e.DegreeAwardDate ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@Gpa", (object?)e.Gpa ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@IsRegistered", (object?)e.IsRegistered ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@AwardedDegreeCode", (object?)e.AwardedDegreeCode ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@ZSZPB", (object?)e.ZSZPB ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@XWZPB", (object?)e.XWZPB ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@XJZPB", (object?)e.XJZPB ?? DBNull.Value));
+            cmd.Parameters.Add(new SqlParameter("@BYZPB", (object?)e.BYZPB ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@CreatedAt", e.CreatedAt == default ? DateTime.Now : e.CreatedAt));
             cmd.Parameters.Add(new SqlParameter("@UpdatedAt", (object?)e.UpdatedAt ?? DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@SyncBatchId", (object?)e.SyncBatchId ?? DBNull.Value));

@@ -11,4 +11,8 @@
     <ProjectReference Include="..\CertificateSystem.Model\CertificateSystem.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
 </Project>
