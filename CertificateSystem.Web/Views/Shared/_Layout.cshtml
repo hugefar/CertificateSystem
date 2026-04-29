@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] - CertificateSystem</title>
+    <title>@ViewData["Title"] - BISTU证书打印系统</title>
     <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css" />
     <link rel="stylesheet" href="~/dist/css/adminlte.css" />
 </head>
@@ -25,6 +25,18 @@
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
                     <a href="/" class="nav-link">首页</a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="/Certificate/Graduation" class="nav-link">毕业证书</a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="/Certificate/Completion" class="nav-link">结业证书</a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="/Certificate/Degree" class="nav-link">学位证书</a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="/Certificate/SecondDegree" class="nav-link">第二学位证书</a>
                 </li>
             </ul>
 
@@ -43,18 +55,29 @@
                     var department = currentUser?.Department ?? "-";
 
                     <li class="nav-item dropdown user-menu">
-                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                            <img src="~/dist/img/user2-160x160.jpg" class="user-image img-circle elevation-2" alt="User Image">
-                            <span class="d-none d-md-inline">@displayName</span>
+                        @{
+                            var initial = "?";
+                            if (!string.IsNullOrWhiteSpace(displayName))
+                            {
+                                initial = displayName.Trim()[0].ToString().ToUpperInvariant();
+                            }
+                        }
+                        <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" data-toggle="dropdown" aria-expanded="false" style="padding-left:6px;padding-right:6px;">
+                            <span class="user-image img-circle elevation-2 bg-primary d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-weight:600;font-size:0.85rem;">
+                                @initial
+                            </span>
+                            <span class="d-none d-md-inline align-middle" style="margin-left:0px;margin-bottom:3px;">@displayName</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                            <li class="user-header bg-primary">
-                                <img src="~/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
-                                <p>
-                                    @displayName
-                                    <small>职工号：@jobNum</small>
-                                    <small>部门：@department</small>
-                                </p>
+                            <li class="user-header bg-primary d-flex align-items-center">
+                                <div class="img-circle elevation-2 bg-primary d-flex align-items-center justify-content-center mr-3" style="width:80px;height:80px;font-weight:600;font-size:2rem;">
+                                    @initial
+                                </div>
+                                <div>
+                                    <p class="mb-0 text-white">@displayName</p>
+                                    <small class="text-white-50">职工号：@jobNum</small><br />
+                                    <small class="text-white-50">部门：@department</small>
+                                </div>
                             </li>
                             @* <li class="user-body">
                                 <div class="row">
@@ -166,7 +189,11 @@
                                 </a>
                             </li>
                         }
-                        <li class="nav-header">系统设置</li>
+                        @if (canViewUsers || canViewSecurityLog)
+                        {
+                            <li class="nav-header">系统设置</li>
+                        }
+                           
                         @if (canViewUsers)
                         {
                             <li class="nav-item">

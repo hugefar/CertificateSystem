@@ -13,8 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FreeSpire.Doc" Version="12.2.0" />
-    <PackageReference Include="FreeSpire.PDF" Version="12.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
@@ -27,6 +25,27 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Spire.Barcode">
+      <HintPath>spiredll\Spire.Barcode.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.Doc">
+      <HintPath>spiredll\Spire.Doc.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.License">
+      <HintPath>spiredll\Spire.License.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.Pdf">
+      <HintPath>spiredll\Spire.Pdf.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.Presentation">
+      <HintPath>spiredll\Spire.Presentation.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.XLS">
+      <HintPath>spiredll\Spire.XLS.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
