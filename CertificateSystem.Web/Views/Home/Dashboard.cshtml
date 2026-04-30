@@ -48,9 +48,6 @@
             <div class="card-header">
                 <h3 class="card-title">打印量统计报表</h3>
                 <div class="card-tools d-flex align-items-center" style="gap:8px;">
-                    <button type="button" id="syncStudentBtn" class="btn btn-sm btn-primary">
-                        <i class="fas fa-sync-alt"></i> 手动同步学生证书
-                    </button>
                     <select id="yearFilter" class="form-control form-control-sm" style="min-width:120px;">
                         <option value="">全部年度</option>
                         @foreach (var y in Model.Years)
@@ -68,7 +65,6 @@
                 </div>
             </div>
             <div class="card-body">
-                <div id="syncStatus" class="alert d-none" role="alert"></div>
                 <div style="height: 420px;">
                     <canvas id="dashboardChart"></canvas>
                 </div>
@@ -140,27 +136,6 @@
             loadChart();
             $('#yearFilter,#departmentFilter').on('change', function () {
                 loadChart();
-            });
-
-            $('#syncStudentBtn').on('click', function () {
-                const $btn = $(this);
-                const $status = $('#syncStatus');
-                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 正在同步...');
-                $status.removeClass('d-none alert-success alert-danger').addClass('alert-info').text('正在执行学生证书同步，请稍候...');
-
-                $.ajax({
-                    url: '/Home/SyncStudentCertificates',
-                    method: 'POST',
-                    success: function (res) {
-                        $status.removeClass('alert-info alert-danger').addClass(res.success ? 'alert-success' : 'alert-danger').text(res.message || (res.success ? '同步成功。' : '同步失败。'));
-                    },
-                    error: function () {
-                        $status.removeClass('alert-info alert-success').addClass('alert-danger').text('同步失败，请稍后重试。');
-                    },
-                    complete: function () {
-                        $btn.prop('disabled', false).html('<i class="fas fa-sync-alt"></i> 手动同步学生证书');
-                    }
-                });
             });
         });
     </script>

@@ -8,7 +8,7 @@ namespace CertificateSystem.BLL
 {
     public interface IStudentSyncService
     {
-        Task SyncAsync(CancellationToken cancellationToken = default);
+        Task<SyncResult> SyncAsync(CancellationToken cancellationToken = default);
     }
 
     public class StudentSyncService : IStudentSyncService
@@ -24,7 +24,7 @@ namespace CertificateSystem.BLL
             _sqlConnectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DefaultConnection not found.");
         }
 
-        public async Task SyncAsync(CancellationToken cancellationToken = default)
+        public async Task<SyncResult> SyncAsync(CancellationToken cancellationToken = default)
         {
             var syncBatchId = Guid.NewGuid().ToString("N");
             await _logService.LogAsync("同步开始", "学生证书同步", $"开始同步学生证书数据，批次号 {syncBatchId}", string.Empty, "System", "127.0.0.1");
@@ -43,11 +43,25 @@ namespace CertificateSystem.BLL
                 await ReplaceAllAsync(mapped, syncBatchId, cancellationToken);
 
                 await _logService.LogAsync("同步完成", "学生证书同步", $"学生证书同步完成，批次号 {syncBatchId}，共 {mapped.Count} 条。", string.Empty, "System", "127.0.0.1");
+                return new SyncResult
+                {
+                    Success = true,
+                    TotalRecords = mapped.Count,
+                    InsertedCount = mapped.Count,
+                    Message = $"学生证书同步完成，共 {mapped.Count} 条。",
+                    ExecutedAt = DateTime.Now
+                };
             }
             catch (Exception ex)
             {
                 await _logService.LogAsync("同步失败", "学生证书同步", $"学生证书同步失败，原因：{ex.Message}", string.Empty, "System", "127.0.0.1");
-                throw;
+                return new SyncResult
+                {
+                    Success = false,
+                    Message = "学生证书同步失败：" + ex.Message,
+                    Errors = new List<string> { ex.Message },
+                    ExecutedAt = DateTime.Now
+                };
             }
         }
 

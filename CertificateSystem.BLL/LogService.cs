@@ -7,6 +7,7 @@ namespace CertificateSystem.BLL
     {
         Task LogAsync(string operationType, string module, string content, string userId, string userName, string ipAddress);
         Task<PagedResult<SecurityLog>> GetPagedListAsync(SecurityLogQueryDto query);
+        Task<List<SecurityLog>> GetLatestByModulesAsync(IEnumerable<string> modules, int topPerModule = 10);
     }
 
     public class LogService : ILogService
@@ -41,6 +42,11 @@ namespace CertificateSystem.BLL
         public async Task<PagedResult<SecurityLog>> GetPagedListAsync(SecurityLogQueryDto query)
         {
             return await _repository.GetPagedListAsync(query ?? new SecurityLogQueryDto());
+        }
+
+        public async Task<List<SecurityLog>> GetLatestByModulesAsync(IEnumerable<string> modules, int topPerModule = 10)
+        {
+            return await _repository.GetLatestByModulesAsync(modules, topPerModule);
         }
     }
 }

@@ -135,6 +135,7 @@
                             var canViewUsers = (await AuthorizationService.AuthorizeAsync(User, null, new PermissionRequirement("User.View"))).Succeeded;
                             var canViewRoles = (await AuthorizationService.AuthorizeAsync(User, null, new PermissionRequirement("Role.View"))).Succeeded;
                             var canViewSecurityLog = (await AuthorizationService.AuthorizeAsync(User, null, new PermissionRequirement("SecurityLog.View"))).Succeeded;
+                            var canViewDataSync = (await AuthorizationService.AuthorizeAsync(User, null, new PermissionRequirement("DataSync.View"))).Succeeded;
                             var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
                             var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
                             var currentType = ViewContext.RouteData.Values["type"]?.ToString() ?? string.Empty;
@@ -189,7 +190,7 @@
                                 </a>
                             </li>
                         }
-                        @if (canViewUsers || canViewSecurityLog)
+                        @if (canViewUsers || canViewSecurityLog || canViewDataSync)
                         {
                             <li class="nav-header">系统设置</li>
                         }
@@ -209,6 +210,15 @@
                                 <a href="/Roles" class="@GetLinkClass("Roles")">
                                     <i class="nav-icon fas fa-user-tag"></i>
                                     <p>角色管理</p>
+                                </a>
+                            </li>
+                        }
+                        @if (canViewDataSync && User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a href="/DataSync/Index" class="@GetLinkClass("DataSync")">
+                                    <i class="nav-icon fas fa-sync-alt"></i>
+                                    <p>数据同步</p>
                                 </a>
                             </li>
                         }

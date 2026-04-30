@@ -23,8 +23,34 @@ namespace CertificateSystem.Web.Services
                 try
                 {
                     using var scope = _scopeFactory.CreateScope();
-                    var syncService = scope.ServiceProvider.GetRequiredService<IStudentSyncService>();
-                    await syncService.SyncAsync(stoppingToken);
+                    var certificateSyncService = scope.ServiceProvider.GetRequiredService<IStudentSyncService>();
+                    var paperSyncService = scope.ServiceProvider.GetRequiredService<IPaperSyncService>();
+
+                    try
+                    {
+                        var certificateResult = await certificateSyncService.SyncAsync(stoppingToken);
+                        if (!certificateResult.Success)
+                        {
+                            _logger.LogWarning("定时同步学生证书数据失败：{Message}", certificateResult.Message);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "定时同步学生证书数据失败。");
+                    }
+
+                    try
+                    {
+                        var paperResult = await paperSyncService.SyncPapersAsync(stoppingToken);
+                        if (!paperResult.Success)
+                        {
+                            _logger.LogWarning("定时同步学生论文数据失败：{Message}", paperResult.Message);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "定时同步学生论文数据失败。");
+                    }
                 }
                 catch (OperationCanceledException)
                 {

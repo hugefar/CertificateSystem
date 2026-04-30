@@ -56,19 +56,26 @@ namespace CertificateSystem.Web.Data
             }
 
             var adminRole = await roleManager.FindByNameAsync("Admin");
-            var securityLogPermission = await dbContext.Permissions.FirstOrDefaultAsync(x => x.Code == "SecurityLog.View");
-            if (adminRole != null && securityLogPermission != null)
+            if (adminRole != null)
             {
-                var exists = await dbContext.RolePermissions.AnyAsync(x => x.RoleId == adminRole.Id && x.PermissionId == securityLogPermission.Id);
-                if (!exists)
+                var permissionCodes = new[] { "SecurityLog.View", "DataSync.View" };
+                var permissions = await dbContext.Permissions.Where(x => permissionCodes.Contains(x.Code)).ToListAsync();
+                foreach (var permission in permissions)
                 {
+                    var exists = await dbContext.RolePermissions.AnyAsync(x => x.RoleId == adminRole.Id && x.PermissionId == permission.Id);
+                    if (exists)
+                    {
+                        continue;
+                    }
+
                     dbContext.RolePermissions.Add(new Entities.RolePermission
                     {
                         RoleId = adminRole.Id,
-                        PermissionId = securityLogPermission.Id
+                        PermissionId = permission.Id
                     });
-                    await dbContext.SaveChangesAsync();
                 }
+
+                await dbContext.SaveChangesAsync();
             }
 
             var testUserName = "operator";

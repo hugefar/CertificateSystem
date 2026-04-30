@@ -65,31 +65,18 @@ namespace CertificateSystem.Web.Controllers
         [PermissionAuthorize("Dashboard.View")]
         public async Task<IActionResult> SyncStudentCertificates()
         {
-            try
-            {
-                await _studentSyncService.SyncAsync();
-                await _logService.LogAsync(
-                    "手动同步",
-                    "学生证书同步",
-                    "手动触发学生证书同步成功。",
-                    User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
-                    User.Identity?.Name ?? string.Empty,
-                    HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
+            var result = await _studentSyncService.SyncAsync();
+            await _logService.LogAsync(
+                result.Success ? "手动同步" : "手动同步失败",
+                "学生证书同步",
+                result.Success
+                    ? $"手动触发学生证书同步成功，共 {result.TotalRecords} 条。"
+                    : $"手动触发学生证书同步失败：{result.Message}",
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
+                User.Identity?.Name ?? string.Empty,
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
 
-                return Json(new { success = true, message = "学生证书同步成功。" });
-            }
-            catch (Exception ex)
-            {
-                await _logService.LogAsync(
-                    "手动同步失败",
-                    "学生证书同步",
-                    $"手动触发学生证书同步失败：{ex.Message}",
-                    User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
-                    User.Identity?.Name ?? string.Empty,
-                    HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
-
-                return Json(new { success = false, message = "学生证书同步失败：" + ex.Message });
-            }
+            return Json(new { success = result.Success, message = result.Message, totalRecords = result.TotalRecords });
         }
 
         public IActionResult Privacy()

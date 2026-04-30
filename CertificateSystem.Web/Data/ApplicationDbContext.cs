@@ -57,7 +57,8 @@ namespace CertificateSystem.Web.Data
                 new Permission { Id = 8, Code = "Role.View", Name = "查看角色", Category = "角色管理", Description = "查看角色列表" },
                 new Permission { Id = 9, Code = "Role.Manage", Name = "管理角色", Category = "角色管理", Description = "新增、编辑、删除角色" },
                 new Permission { Id = 10, Code = "Role.Permission", Name = "分配权限", Category = "角色管理", Description = "为角色分配功能权限" },
-                new Permission { Id = 11, Code = "SecurityLog.View", Name = "查看安全日志", Category = "安全日志", Description = "查看安全审计日志" }
+                new Permission { Id = 11, Code = "SecurityLog.View", Name = "查看安全日志", Category = "安全日志", Description = "查看安全审计日志" },
+                new Permission { Id = 12, Code = "DataSync.View", Name = "查看数据同步", Category = "数据同步", Description = "查看和执行数据同步任务" }
             );
         }
     }

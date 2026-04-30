@@ -1,0 +1,147 @@
+@{
+    ViewData["Title"] = "数据同步管理";
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-certificate mr-1"></i>学生证书同步</h3>
+                <div class="card-tools">
+                    <button type="button" id="btnSyncCertificates" class="btn btn-sm btn-primary">
+                        <i class="fas fa-sync-alt"></i> 手动同步
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">上次同步时间</dt>
+                    <dd class="col-sm-8" id="certificateLastSyncTime">-</dd>
+                    <dt class="col-sm-4">同步记录数</dt>
+                    <dd class="col-sm-8" id="certificateTotalCount">0</dd>
+                    <dt class="col-sm-4">状态</dt>
+                    <dd class="col-sm-8"><span id="certificateStatus" class="badge badge-secondary">未执行</span></dd>
+                    <dt class="col-sm-4">说明</dt>
+                    <dd class="col-sm-8" id="certificateMessage">暂无同步记录</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card card-success card-outline">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-file-alt mr-1"></i>学生论文同步</h3>
+                <div class="card-tools">
+                    <button type="button" id="btnSyncPapers" class="btn btn-sm btn-success">
+                        <i class="fas fa-sync-alt"></i> 手动同步
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">上次同步时间</dt>
+                    <dd class="col-sm-8" id="paperLastSyncTime">-</dd>
+                    <dt class="col-sm-4">同步记录数</dt>
+                    <dd class="col-sm-8" id="paperTotalCount">0</dd>
+                    <dt class="col-sm-4">状态</dt>
+                    <dd class="col-sm-8"><span id="paperStatus" class="badge badge-secondary">未执行</span></dd>
+                    <dt class="col-sm-4">说明</dt>
+                    <dd class="col-sm-8" id="paperMessage">暂无同步记录</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="syncAlert" class="alert d-none" role="alert"></div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function getAntiForgeryToken() {
+            return $('input[name="__RequestVerificationToken"]').val();
+        }
+
+        function formatDateTime(value) {
+            if (!value) {
+                return '-';
+            }
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                return value;
+            }
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hour = String(date.getHours()).padStart(2, '0');
+            const minute = String(date.getMinutes()).padStart(2, '0');
+            const second = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+        }
+
+        function setStatus(prefix, item) {
+            $('#' + prefix + 'LastSyncTime').text(formatDateTime(item.lastSyncTime));
+            $('#' + prefix + 'TotalCount').text(item.lastSyncCount || 0);
+            $('#' + prefix + 'Message').text(item.message || '暂无同步记录');
+
+            const $status = $('#' + prefix + 'Status');
+            $status.removeClass('badge-secondary badge-success badge-danger badge-info');
+            if (item.status === '成功') {
+                $status.addClass('badge-success').text('成功');
+            } else if (item.status === '失败') {
+                $status.addClass('badge-danger').text('失败');
+            } else {
+                $status.addClass('badge-secondary').text(item.status || '未执行');
+            }
+        }
+
+        function loadStatus() {
+            $.get('/DataSync/GetSyncStatus', function (res) {
+                setStatus('certificate', res.certificateSync);
+                setStatus('paper', res.paperSync);
+            });
+        }
+
+        function showAlert(type, message) {
+            const $alert = $('#syncAlert');
+            $alert.removeClass('d-none alert-success alert-danger alert-info').addClass(type).text(message);
+        }
+
+        function runSync(url, $button, originalHtml, loadingHtml) {
+            $button.prop('disabled', true).html(loadingHtml);
+            showAlert('alert-info', '正在执行同步，请稍候...');
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                success: function (res) {
+                    showAlert(res.success ? 'alert-success' : 'alert-danger', res.message || (res.success ? '同步成功。' : '同步失败。'));
+                    loadStatus();
+                },
+                error: function () {
+                    showAlert('alert-danger', '同步失败，请稍后重试。');
+                },
+                complete: function () {
+                    $button.prop('disabled', false).html(originalHtml);
+                }
+            });
+        }
+
+        $(function () {
+            loadStatus();
+
+            $('#btnSyncCertificates').on('click', function () {
+                const $btn = $(this);
+                runSync('/DataSync/SyncCertificates', $btn, '<i class="fas fa-sync-alt"></i> 手动同步', '<i class="fas fa-spinner fa-spin"></i> 正在同步');
+            });
+
+            $('#btnSyncPapers').on('click', function () {
+                const $btn = $(this);
+                runSync('/DataSync/SyncPapers', $btn, '<i class="fas fa-sync-alt"></i> 手动同步', '<i class="fas fa-spinner fa-spin"></i> 正在同步');
+            });
+        });
+    </script>
+}

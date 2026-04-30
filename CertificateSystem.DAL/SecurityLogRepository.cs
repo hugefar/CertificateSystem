@@ -10,6 +10,7 @@ namespace CertificateSystem.DAL
     {
         Task<int> InsertAsync(SecurityLog log);
         Task<PagedResult<SecurityLog>> GetPagedListAsync(SecurityLogQueryDto query);
+        Task<List<SecurityLog>> GetLatestByModulesAsync(IEnumerable<string> modules, int topPerModule = 10);
     }
 
     public class SecurityLogRepository : ISecurityLogRepository
@@ -85,6 +86,56 @@ FETCH NEXT @PageSize ROWS ONLY";
                 PageIndex = query.PageIndex,
                 PageSize = query.PageSize
             };
+        }
+
+        public async Task<List<SecurityLog>> GetLatestByModulesAsync(IEnumerable<string> modules, int topPerModule = 10)
+        {
+            var moduleList = modules?.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList() ?? new List<string>();
+            if (moduleList.Count == 0)
+            {
+                return new List<SecurityLog>();
+            }
+
+            var sqlBuilder = new StringBuilder();
+            sqlBuilder.AppendLine("WITH RankedLogs AS (");
+            sqlBuilder.AppendLine("    SELECT Id, OperationType, OperationModule, Content, OperatorUserId, OperatorName, IPAddress, CreatedAt,");
+            sqlBuilder.AppendLine("           ROW_NUMBER() OVER (PARTITION BY OperationModule ORDER BY CreatedAt DESC, Id DESC) AS RowNum");
+            sqlBuilder.AppendLine("    FROM dbo.SecurityLogs");
+            sqlBuilder.Append("    WHERE OperationModule IN (");
+
+            var parameters = new List<SqlParameter>();
+            for (var i = 0; i < moduleList.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sqlBuilder.Append(", ");
+                }
+
+                var parameterName = "@Module" + i;
+                sqlBuilder.Append(parameterName);
+                parameters.Add(new SqlParameter(parameterName, moduleList[i]));
+            }
+
+            sqlBuilder.AppendLine(")");
+            sqlBuilder.AppendLine(")");
+            sqlBuilder.AppendLine("SELECT Id, OperationType, OperationModule, Content, OperatorUserId, OperatorName, IPAddress, CreatedAt");
+            sqlBuilder.AppendLine("FROM RankedLogs");
+            sqlBuilder.AppendLine("WHERE RowNum <= @TopPerModule");
+            sqlBuilder.AppendLine("ORDER BY CreatedAt DESC, Id DESC");
+            parameters.Add(new SqlParameter("@TopPerModule", topPerModule <= 0 ? 10 : topPerModule));
+
+            var items = new List<SecurityLog>();
+            await using var conn = SqlHelper.CreateConnection();
+            await using var cmd = new SqlCommand(sqlBuilder.ToString(), conn);
+            cmd.Parameters.AddRange(CloneParameters(parameters));
+            await conn.OpenAsync();
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                items.Add(Map(reader));
+            }
+
+            return items;
         }
 
         private static string BuildWhereSql(SecurityLogQueryDto query, List<SqlParameter> parameters)
