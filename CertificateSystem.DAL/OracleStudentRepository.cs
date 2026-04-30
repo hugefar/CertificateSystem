@@ -70,7 +70,7 @@ FROM v_xs_EXWzs";
                     ZYDM = "080202",
                     ZYMC = GetString(reader, "ZYMC"),
                     BJMC = GetString(reader, "BJMC"),
-                    XB = GetString(reader, "XB"),
+                    XB = GetString(reader, "XB") == "1" ? "男" : "女",
                     MZ = GetString(reader, "MZ"),
                     ZZMM = GetString(reader, "ZZMM"),
                     SFZJLX = GetString(reader, "SFZJLX"),
