@@ -68,11 +68,11 @@ namespace CertificateSystem.Web.Services
                     ReplacePlaceholder(document, "[BYR]", entity.GraduationDate?.ToString("%d") ?? string.Empty);
                     ReplacePlaceholder(document, "[ZY]", entity.Major);
                     ReplacePlaceholder(document, "[XZ]", GetChineseSchoolYear(entity.StudyYears ?? 0));
-                    ReplacePlaceholder(document, "[CC]", entity.EducationLevel.Replace("本","") ?? string.Empty);
+                    ReplacePlaceholder(document, "[CC]", entity.EducationLevel.Replace("科","") ?? string.Empty);
                     ReplacePlaceholder(document, "[ZSBH]", entity.CertificateNumber ?? string.Empty);
                     ReplacePlaceholder(document, "[XWLX]", entity.AwardedDegree);
                     ReplacePlaceholder(document, "[XWBH]", entity.DegreeCertificateNumber);
-                    ReplacePlaceholder(document, "[HXWRQ]", entity.GraduationDate.ToChineseDate());
+                    ReplacePlaceholder(document, "[HXWRQ]", entity.DegreeAwardDate.ToChineseDate());
 
                     //测试照片地址
                     //entity.PhotoPath = @"J:\2026TEMP\20260422\U202510114.JPG";
@@ -180,7 +180,12 @@ namespace CertificateSystem.Web.Services
         {
             // 空值校验，避免运行时报错
             if (document == null || xszpBytes == null || xszpBytes.Length == 0)
-                throw new ArgumentException("文档或图片数据不能为空");
+            {
+                //获取wwwroot下面的图片
+                var imagePath = Path.Combine(_env.WebRootPath, "Templates", "black.jpg");
+                xszpBytes=ToolHelper.GetPictureData(imagePath);
+            }
+                //throw new ArgumentException("文档或图片数据不能为空");
 
             // 遍历文档所有段落
             foreach (Spire.Doc.Section section in document.Sections)
