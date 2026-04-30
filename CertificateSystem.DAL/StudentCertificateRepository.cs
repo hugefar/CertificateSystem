@@ -162,7 +162,17 @@ ORDER BY GraduationYear DESC, Institute ASC, Major ASC, ClassName ASC, StudentId
         // Distinct value queries for cascading filters
         public async Task<List<string>> GetDistinctGraduationYearsAsync(string certificateType)
         {
-            const string sql = @"SELECT DISTINCT GraduationYear FROM dbo.StudentCertificates WHERE CertificateType = @CertificateType ORDER BY GraduationYear";
+            // 先规整唯一值再排序，空值排最后，避免 SQL Server 执行计划异常
+            const string sql = @"
+SELECT GraduationYear
+FROM (
+    SELECT DISTINCT NULLIF(LTRIM(RTRIM(GraduationYear)), '') AS GraduationYear
+    FROM dbo.StudentCertificates
+    WHERE CertificateType = @CertificateType
+) t
+ORDER BY CASE WHEN GraduationYear IS NULL THEN 1 ELSE 0 END,
+         TRY_CAST(GraduationYear AS INT) DESC,
+         GraduationYear DESC";
             var list = new List<string>();
             await using var conn = SqlHelper.CreateConnection();
             await using var cmd = new SqlCommand(sql, conn);
@@ -171,7 +181,8 @@ ORDER BY GraduationYear DESC, Institute ASC, Major ASC, ClassName ASC, StudentId
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                list.Add(reader[0]?.ToString() ?? string.Empty);
+                // 这里如果为 null，转成空字符串
+                list.Add(reader[0] == DBNull.Value ? string.Empty : reader[0]?.ToString() ?? string.Empty);
             }
             return list;
         }

@@ -68,15 +68,15 @@ namespace CertificateSystem.Web.Services
                     ReplacePlaceholder(document, "[BYR]", entity.GraduationDate?.ToString("%d") ?? string.Empty);
                     ReplacePlaceholder(document, "[ZY]", entity.Major);
                     ReplacePlaceholder(document, "[XZ]", GetChineseSchoolYear(entity.StudyYears ?? 0));
-                    ReplacePlaceholder(document, "[CC]", entity.EducationLevel ?? string.Empty);
+                    ReplacePlaceholder(document, "[CC]", entity.EducationLevel.Replace("本","") ?? string.Empty);
                     ReplacePlaceholder(document, "[ZSBH]", entity.CertificateNumber ?? string.Empty);
-                    ReplacePlaceholder(document, "[XWLX]", "管理学学士学位");
-                    ReplacePlaceholder(document, "[XWBH]", "1123242026100029");
+                    ReplacePlaceholder(document, "[XWLX]", entity.AwardedDegree);
+                    ReplacePlaceholder(document, "[XWBH]", entity.DegreeCertificateNumber);
                     ReplacePlaceholder(document, "[HXWRQ]", entity.GraduationDate.ToChineseDate());
 
                     //测试照片地址
-                    entity.PhotoPath = @"J:\2026TEMP\20260422\U202510114.JPG";
-                    byte[] xszpBytes = ToolHelper.GetPictureData(entity.PhotoPath);
+                    //entity.PhotoPath = @"J:\2026TEMP\20260422\U202510114.JPG";
+                    byte[] xszpBytes = entity.ZSZPB!=null? entity.ZSZPB: (entity.BYZPB!=null? entity.BYZPB : entity.XJZPB); //ToolHelper.GetPictureData(entity.PhotoPath);
                     ReplaceImageByPicTitle(document, xszpBytes);    
 
 

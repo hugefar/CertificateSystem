@@ -9,9 +9,11 @@ namespace CertificateSystem.Model
             return new StudentCertificate
             {
                 CertificateType = raw.CertificateType,
-                GraduationYear = raw.BYJMC ?? string.Empty,
+                GraduationYear = !string.IsNullOrWhiteSpace(raw.BYJMC)
+                    ? raw.BYJMC
+                    : (ParseNullableDate(raw.SJBYRQ) is DateTime dt ? dt.Year.ToString() : string.Empty),
                 Grade= raw.XZNJ ?? string.Empty,
-                GraduationYearName = raw.BYJMC,
+                GraduationYearName = raw.BYJMC ?? string.Empty,
                 InstituteCode = raw.YXDM ?? string.Empty,
                 Institute = raw.YXMC ?? string.Empty,
                 MajorCode = raw.ZYDM ?? string.Empty,
