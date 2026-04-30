@@ -1,5 +1,5 @@
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using CertificateSystem.DAL;
 using CertificateSystem.Model;
 using Microsoft.Extensions.Configuration;
@@ -59,7 +59,7 @@ namespace CertificateSystem.BLL
                 graduation.CertificateType = "毕业证书";
                 yield return graduation.ToStudentCertificate(syncBatchId);
 
-                if (!string.IsNullOrWhiteSpace(raw.XWZH) || string.Equals(raw.SFSYXW, "是", StringComparison.OrdinalIgnoreCase) || string.Equals(raw.SFSYXW, "Y", StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(raw.XWZH) || string.Equals(raw.SFSYXW, "1", StringComparison.OrdinalIgnoreCase))
                 {
                     var degree = Clone(raw, "学位证书");
                     yield return degree.ToStudentCertificate(syncBatchId);
@@ -95,6 +95,8 @@ namespace CertificateSystem.BLL
                 XM = raw.XM,
                 XZNJ = raw.XZNJ,
                 YXMC = raw.YXMC,
+                YXDM= raw.YXDM,
+                ZYDM = raw.ZYDM,
                 ZYMC = raw.ZYMC,
                 BJMC = raw.BJMC,
                 XB = raw.XB,
@@ -103,12 +105,12 @@ namespace CertificateSystem.BLL
                 SFZJLX = raw.SFZJLX,
                 SFZJH = raw.SFZJH,
                 KSH = raw.KSH,
-                XXFS = raw.XXFS,
+                XXXS = raw.XXXS,
                 CSRQ = raw.CSRQ,
                 BJYJL = raw.BJYJL,
                 BYZSH = raw.BYZSH,
                 JYZSH = raw.JYZSH,
-                SJBYSJ = raw.SJBYSJ,
+                SJBYRQ = raw.SJBYRQ,
                 SFSYXW = raw.SFSYXW,
                 SYXW = raw.SYXW,
                 XWZH = raw.XWZH,
@@ -135,7 +137,7 @@ namespace CertificateSystem.BLL
 
             try
             {
-                await using (var deleteCmd = new SqlCommand("DELETE FROM dbo.StudentCertificates", conn, tran))
+                await using (var deleteCmd = new SqlCommand("truncate table dbo.StudentCertificates", conn, tran))
                 {
                     await deleteCmd.ExecuteNonQueryAsync(cancellationToken);
                 }
@@ -168,7 +170,9 @@ namespace CertificateSystem.BLL
             var table = new DataTable();
             table.Columns.Add("CertificateType", typeof(string));
             table.Columns.Add("GraduationYear", typeof(string));
+            table.Columns.Add("InstituteCode", typeof(string));
             table.Columns.Add("Institute", typeof(string));
+            table.Columns.Add("MajorCode", typeof(string));
             table.Columns.Add("Major", typeof(string));
             table.Columns.Add("ClassName", typeof(string));
             table.Columns.Add("StudentId", typeof(string));
@@ -204,13 +208,16 @@ namespace CertificateSystem.BLL
             table.Columns.Add("XWZPB", typeof(byte[]));
             table.Columns.Add("XJZPB", typeof(byte[]));
             table.Columns.Add("BYZPB", typeof(byte[]));
+            table.Columns.Add("Grade", typeof(string));
 
             foreach (var item in data)
             {
                 table.Rows.Add(
                     item.CertificateType,
                     item.GraduationYear,
+                    item.InstituteCode,
                     item.Institute,
+                    item.MajorCode,
                     item.Major,
                     item.ClassName,
                     item.StudentId,
@@ -245,7 +252,8 @@ namespace CertificateSystem.BLL
                     (object?)item.ZSZPB ?? DBNull.Value,
                     (object?)item.XWZPB ?? DBNull.Value,
                     (object?)item.XJZPB ?? DBNull.Value,
-                    (object?)item.BYZPB ?? DBNull.Value);
+                    (object?)item.BYZPB ?? DBNull.Value,
+                    (object?)item.Grade ?? DBNull.Value);
             }
 
             return table;

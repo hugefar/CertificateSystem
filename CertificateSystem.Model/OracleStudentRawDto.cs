@@ -7,7 +7,9 @@ namespace CertificateSystem.Model
         public string? XH { get; set; }
         public string? XM { get; set; }
         public string? XZNJ { get; set; }
+        public string? YXDM { get; set; }
         public string? YXMC { get; set; }
+        public string? ZYDM { get; set; }
         public string? ZYMC { get; set; }
         public string? BJMC { get; set; }
         public string? XB { get; set; }
@@ -16,12 +18,12 @@ namespace CertificateSystem.Model
         public string? SFZJLX { get; set; }
         public string? SFZJH { get; set; }
         public string? KSH { get; set; }
-        public string? XXFS { get; set; }
+        public string? XXXS { get; set; }
         public string? CSRQ { get; set; }
         public string? BJYJL { get; set; }
         public string? BYZSH { get; set; }
         public string? JYZSH { get; set; }
-        public string? SJBYSJ { get; set; }
+        public string? SJBYRQ { get; set; }
         public string? SFSYXW { get; set; }
         public string? SYXW { get; set; }
         public string? XWZH { get; set; }

@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using CertificateSystem.DBUtility;
 using CertificateSystem.Model;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace CertificateSystem.DAL
 {

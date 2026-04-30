@@ -10,8 +10,11 @@ namespace CertificateSystem.Model
             {
                 CertificateType = raw.CertificateType,
                 GraduationYear = raw.BYJMC ?? string.Empty,
+                Grade= raw.XZNJ ?? string.Empty,
                 GraduationYearName = raw.BYJMC,
+                InstituteCode = raw.YXDM ?? string.Empty,
                 Institute = raw.YXMC ?? string.Empty,
+                MajorCode = raw.ZYDM ?? string.Empty,
                 Major = raw.ZYMC ?? string.Empty,
                 ClassName = raw.BJMC ?? string.Empty,
                 StudentId = raw.XH ?? string.Empty,
@@ -22,10 +25,10 @@ namespace CertificateSystem.Model
                 IdCardType = raw.SFZJLX,
                 IdCardNo = raw.SFZJH,
                 ExamNo = raw.KSH,
-                StudyMode = raw.XXFS,
+                StudyMode = raw.XXXS,
                 BirthDate = ParseNullableDate(raw.CSRQ),
                 EnrollmentDate = ParseNullableDate(raw.RXNY),
-                GraduationDate = ParseNullableDate(raw.SJBYSJ),
+                GraduationDate = ParseNullableDate(raw.SJBYRQ),
                 GraduationConclusion = raw.BJYJL,
                 StudyYears = ParseNullableInt(raw.XZ),
                 EducationLevel = raw.PYCC,
@@ -66,7 +69,7 @@ namespace CertificateSystem.Model
             return raw.CertificateType switch
             {
                 "学位证书" => ParseNullableDate(raw.XWSYSJ),
-                _ => ParseNullableDate(raw.SJBYSJ)
+                _ => ParseNullableDate(raw.SJBYRQ)
             };
         }
 

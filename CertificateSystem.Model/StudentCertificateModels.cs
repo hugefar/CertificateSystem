@@ -5,8 +5,12 @@ namespace CertificateSystem.Model
         public long Id { get; set; }
         public string CertificateType { get; set; } = string.Empty;
         public string GraduationYear { get; set; } = string.Empty;
+        public string Grade { get; set; } = string.Empty;
         public string? GraduationYearName { get; set; }
+
+        public string InstituteCode { get; set; } = string.Empty;
         public string Institute { get; set; } = string.Empty;
+        public string MajorCode { get; set; } = string.Empty;
         public string Major { get; set; } = string.Empty;
         public string ClassName { get; set; } = string.Empty;
         public string StudentId { get; set; } = string.Empty;

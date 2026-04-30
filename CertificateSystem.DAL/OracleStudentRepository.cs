@@ -23,8 +23,8 @@ namespace CertificateSystem.DAL
         public Task<List<OracleStudentRawDto>> GetGraduationAndDegreeStudentsAsync(CancellationToken cancellationToken = default)
         {
             const string sql = @"
-SELECT XH, XM, XZNJ, YXMC, ZYMC, BJMC, XB, MZ, ZZMM, SFZJLX, SFZJH, KSH, XXFS, CSRQ, BJYJL,
-       BYZSH, JYZSH, SJBYSJ, SFSYXW, SYXW, XWZH, XWSYSJ, ZSZPB, XWZPB, XJZPB, BYZPB, XZ, PYCC, RXNY, SFZC, BISTUGPA, BYJMC, SYXWDM
+SELECT XH, XM, XZNJ, YXMC, ZYMC, BJMC, XB, MZ, ZZMM, SFZJLX, SFZJH, KSH, XXXS, CSRQ, BJYJL,
+       BYZSH, JYZSH, SJBYRQ, SFSYXW, SYXW, XWZH, XWSYSJ, ZSZPB, XWZPB, XJZPB, BYZPB, XZ, PYCC, RXNY, SFZC, BISTUGPA, BYJMC, SYXWDM
 FROM v_xs_byzs_FEXW";
             return ReadAsync(sql, "v_xs_byzs_FEXW", cancellationToken);
         }
@@ -32,8 +32,8 @@ FROM v_xs_byzs_FEXW";
         public Task<List<OracleStudentRawDto>> GetCompletionStudentsAsync(CancellationToken cancellationToken = default)
         {
             const string sql = @"
-SELECT XH, XM, XZNJ, YXMC, ZYMC, BJMC, XB, MZ, ZZMM, SFZJLX, SFZJH, KSH, XXFS, CSRQ, BJYJL,
-       BYZSH, JYZSH, SJBYSJ, SFSYXW, SYXW, XWZH, XWSYSJ, ZSZPB, XWZPB, XJZPB, BYZPB, XZ, PYCC, RXNY, SFZC, BISTUGPA, BYJMC, SYXWDM
+SELECT XH, XM, XZNJ, YXMC, ZYMC, BJMC, XB, MZ, ZZMM, SFZJLX, SFZJH, KSH, XXXS, CSRQ, BJYJL,
+       BYZSH, JYZSH, SJBYRQ, SFSYXW, SYXW, XWZH, XWSYSJ, ZSZPB, XWZPB, XJZPB, BYZPB, XZ, PYCC, RXNY, SFZC, BISTUGPA, BYJMC, SYXWDM
 FROM v_xs_JYzs";
             return ReadAsync(sql, "v_xs_JYzs", cancellationToken);
         }
@@ -41,8 +41,8 @@ FROM v_xs_JYzs";
         public Task<List<OracleStudentRawDto>> GetSecondDegreeStudentsAsync(CancellationToken cancellationToken = default)
         {
             const string sql = @"
-SELECT XH, XM, XZNJ, YXMC, ZYMC, BJMC, XB, MZ, ZZMM, SFZJLX, SFZJH, KSH, XXFS, CSRQ, BJYJL,
-       BYZSH, JYZSH, SJBYSJ, SFSYXW, SYXW, XWZH, XWSYSJ, ZSZPB, XWZPB, XJZPB, BYZPB, XZ, PYCC, RXNY, SFZC, BISTUGPA, BYJMC, SYXWDM
+SELECT XH, XM, XZNJ, YXMC, ZYMC, BJMC, XB, MZ, ZZMM, SFZJLX, SFZJH, KSH, XXXS, CSRQ, BJYJL,
+       BYZSH, JYZSH, SJBYRQ, SFSYXW, SYXW, XWZH, XWSYSJ, ZSZPB, XWZPB, XJZPB, BYZPB, XZ, PYCC, RXNY, SFZC, BISTUGPA, BYJMC, SYXWDM
 FROM v_xs_EXWzs";
             return ReadAsync(sql, "v_xs_EXWzs", cancellationToken);
         }
@@ -65,7 +65,9 @@ FROM v_xs_EXWzs";
                     XH = GetString(reader, "XH"),
                     XM = GetString(reader, "XM"),
                     XZNJ = GetString(reader, "XZNJ"),
+                    YXDM = "11232",
                     YXMC = GetString(reader, "YXMC"),
+                    ZYDM = "080202",
                     ZYMC = GetString(reader, "ZYMC"),
                     BJMC = GetString(reader, "BJMC"),
                     XB = GetString(reader, "XB"),
@@ -74,12 +76,12 @@ FROM v_xs_EXWzs";
                     SFZJLX = GetString(reader, "SFZJLX"),
                     SFZJH = GetString(reader, "SFZJH"),
                     KSH = GetString(reader, "KSH"),
-                    XXFS = GetString(reader, "XXFS"),
+                    XXXS = GetString(reader, "XXXS"),
                     CSRQ = GetString(reader, "CSRQ"),
                     BJYJL = GetString(reader, "BJYJL"),
                     BYZSH = GetString(reader, "BYZSH"),
                     JYZSH = GetString(reader, "JYZSH"),
-                    SJBYSJ = GetString(reader, "SJBYSJ"),
+                    SJBYRQ = GetString(reader, "SJBYRQ"),
                     SFSYXW = GetString(reader, "SFSYXW"),
                     SYXW = GetString(reader, "SYXW"),
                     XWZH = GetString(reader, "XWZH"),
