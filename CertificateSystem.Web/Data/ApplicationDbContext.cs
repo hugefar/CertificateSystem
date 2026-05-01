@@ -58,7 +58,13 @@ namespace CertificateSystem.Web.Data
                 new Permission { Id = 9, Code = "Role.Manage", Name = "管理角色", Category = "角色管理", Description = "新增、编辑、删除角色" },
                 new Permission { Id = 10, Code = "Role.Permission", Name = "分配权限", Category = "角色管理", Description = "为角色分配功能权限" },
                 new Permission { Id = 11, Code = "SecurityLog.View", Name = "查看安全日志", Category = "安全日志", Description = "查看安全审计日志" },
-                new Permission { Id = 12, Code = "DataSync.View", Name = "查看数据同步", Category = "数据同步", Description = "查看和执行数据同步任务" }
+                new Permission { Id = 12, Code = "DataSync.View", Name = "查看数据同步", Category = "数据同步", Description = "查看和执行数据同步任务" },
+                new Permission { Id = 13, Code = "Certificate.Graduation.Export", Name = "导出毕业证书", Category = "证书管理", Description = "导出毕业证书Excel" },
+                new Permission { Id = 14, Code = "Certificate.Completion.Export", Name = "导出结业证书", Category = "证书管理", Description = "导出结业证书Excel" },
+                new Permission { Id = 15, Code = "Certificate.Degree.Export", Name = "导出学位证书", Category = "证书管理", Description = "导出学位证书Excel" },
+                new Permission { Id = 16, Code = "Certificate.SecondDegree.Export", Name = "导出第二学位证书", Category = "证书管理", Description = "导出第二学位证书Excel" },
+                new Permission { Id = 17, Code = "Certificate.Degree.ExportWord", Name = "导出学位授予名单Word", Category = "证书管理", Description = "导出普通高等教育学士学位授予人员名单Word" },
+                new Permission { Id = 18, Code = "Certificate.SecondDegree.ExportWord", Name = "导出第二学位授予名单Word", Category = "证书管理", Description = "导出第二学士学位授予人员名单Word" }
             );
         }
     }

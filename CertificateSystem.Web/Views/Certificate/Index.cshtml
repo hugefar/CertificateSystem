@@ -1,70 +1,8 @@
-
- <script>
-         @{
-            ViewData["Title"] = ViewBag.Title;
-            var certificateType = (string)ViewBag.CertificateType;
-            var certificateTypeName = (string)ViewBag.CertificateTypeName;
-        }
-
-        function loadGraduationYears() {
-            $.getJSON('/Certificate/GetGraduationYears', { certificateType: certificateType }, function (res) {
-                const $sel = $('#GraduationYear');
-                $sel.empty().append('<option value="">全部届</option>');
-                if (!res) return;
-                res.forEach(function (y) {
-                    $sel.append(`<option value="${y}">${y}</option>`);
-                });
-
-            // pdf modal print button
-            $('#pdfPrintBtn').on('click', function () {
-                const iframe = document.getElementById('pdfIframe');
-                if (!iframe || !iframe.contentWindow) {
-                    alert('无法打印：未加载 PDF');
-                    return;
-                }
-                try {
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                } catch (err) {
-                    alert('打印失败，请在查看器中使用打印按钮。');
-                }
-            });
-            });
-        }
-
-        function loadInstitutes(year) {
-            $.getJSON('/Certificate/GetInstitutes', { certificateType: certificateType, graduationYear: year }, function (res) {
-                const $sel = $('#Institute');
-                $sel.empty().append('<option value="">全部学院</option>');
-                if (!res) return;
-                res.forEach(function (v) {
-                    $sel.append(`<option value="${v}">${v}</option>`);
-                });
-            });
-        }
-
-        function loadMajors(year, institute) {
-            $.getJSON('/Certificate/GetMajors', { certificateType: certificateType, graduationYear: year, institute: institute }, function (res) {
-                const $sel = $('#Major');
-                $sel.empty().append('<option value="">全部专业</option>');
-                if (!res) return;
-                res.forEach(function (v) {
-                    $sel.append(`<option value="${v}">${v}</option>`);
-                });
-            });
-        }
-
-        function loadClasses(year, institute, major) {
-            $.getJSON('/Certificate/GetClasses', { certificateType: certificateType, graduationYear: year, institute: institute, major: major }, function (res) {
-                const $sel = $('#ClassName');
-                $sel.empty().append('<option value="">全部班级</option>');
-                if (!res) return;
-                res.forEach(function (v) {
-                    $sel.append(`<option value="${v}">${v}</option>`);
-                });
-            });
-        }
- </script>
+@{
+    ViewData["Title"] = ViewBag.Title;
+    var certificateType = (string)ViewBag.CertificateType;
+    var certificateTypeName = (string)ViewBag.CertificateTypeName;
+}
 <section class="content">
     <div class="container-fluid">
         <div class="card card-primary card-outline">
@@ -119,6 +57,11 @@
                 <div class="card-tools ml-auto ms-auto">
                     <button id="printSelectedBtn" class="btn btn-info mr-2"><i class="fas fa-check-square"></i> 打印选中</button>
                     <button id="printAllBtn" class="btn btn-success"><i class="fas fa-print"></i> 打印全部</button>
+                    <button id="exportExcelBtn" class="btn btn-success ml-2"><i class="fas fa-file-excel"></i> 导出学信网模版</button>
+                    @if (certificateType == "Degree" || certificateType == "SecondDegree")
+                    {
+                        <button id="exportWordBtn" class="btn btn-warning ml-2"><i class="fa fa-file-word"></i> 导出学位授予名单</button>
+                    }
                 </div>
             </div>
             <div class="card-body table-responsive p-0">
@@ -187,7 +130,8 @@
 
 @section Scripts {
     <script>
-        const certificateType = '@certificateType';
+        const certificateType = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(certificateType));
+        const certificateTypeName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(certificateTypeName));
         let pageSize = 10;
         let pageIndex = 1;
         let totalCount = 0;
@@ -206,6 +150,79 @@
                 PageIndex: page || 1,
                 PageSize: pageSize
             };
+        }
+
+        function loadGraduationYears() {
+            $.getJSON('/Certificate/GetGraduationYears', { certificateType: certificateType }, function (res) {
+                const $sel = $('#GraduationYear');
+                $sel.empty().append('<option value="">全部届</option>');
+                if (!res) return;
+                res.forEach(function (y) {
+                    $sel.append(`<option value="${y}">${y}</option>`);
+                });
+            });
+        }
+
+        function loadInstitutes(year) {
+            $.getJSON('/Certificate/GetInstitutes', { certificateType: certificateType, graduationYear: year }, function (res) {
+                const $sel = $('#Institute');
+                $sel.empty().append('<option value="">全部学院</option>');
+                if (!res) return;
+                res.forEach(function (v) {
+                    $sel.append(`<option value="${v}">${v}</option>`);
+                });
+            });
+        }
+
+        function loadMajors(year, institute) {
+            $.getJSON('/Certificate/GetMajors', { certificateType: certificateType, graduationYear: year, institute: institute }, function (res) {
+                const $sel = $('#Major');
+                $sel.empty().append('<option value="">全部专业</option>');
+                if (!res) return;
+                res.forEach(function (v) {
+                    $sel.append(`<option value="${v}">${v}</option>`);
+                });
+            });
+        }
+
+        function loadClasses(year, institute, major) {
+            $.getJSON('/Certificate/GetClasses', { certificateType: certificateType, graduationYear: year, institute: institute, major: major }, function (res) {
+                const $sel = $('#ClassName');
+                $sel.empty().append('<option value="">全部班级</option>');
+                if (!res) return;
+                res.forEach(function (v) {
+                    $sel.append(`<option value="${v}">${v}</option>`);
+                });
+            });
+        }
+
+        function buildExportQuery() {
+            return {
+                CertificateType: certificateType,
+                StudentIdOrName: $('#StudentIdOrName').val(),
+                ClassName: $('#ClassName').val(),
+                Major: $('#Major').val(),
+                Institute: $('#Institute').val(),
+                GraduationYear: $('#GraduationYear').val()
+            };
+        }
+
+        function getExportUrl() {
+            switch (certificateType) {
+                case 'Graduation': return '/Certificate/ExportGraduation';
+                case 'Completion': return '/Certificate/ExportCompletion';
+                case 'Degree': return '/Certificate/ExportDegree';
+                case 'SecondDegree': return '/Certificate/ExportSecondDegree';
+                default: return '';
+            }
+        }
+
+        function getWordExportUrl() {
+            switch (certificateType) {
+                case 'Degree': return '/Certificate/ExportDegreeWord';
+                case 'SecondDegree': return '/Certificate/ExportSecondDegreeWord';
+                default: return '';
+            }
         }
 
         function loadData(page) {
@@ -462,6 +479,208 @@
 
             $('#printAllBtn').on('click', function () {
                 startBatchPreview('All');
+            });
+
+            $('#exportExcelBtn').on('click', function () {
+                const exportUrl = getExportUrl();
+                if (!exportUrl) {
+                    if (window.toastr) toastr.error('未知证书类型');
+                    else alert('未知证书类型');
+                    return;
+                }
+
+                const query = buildExportQuery();
+                const $btn = $(this);
+                const originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 导出中...');
+
+                // append overlay style once
+                if (!$('#export-overlay-style').length) {
+                    $('head').append(`
+                        <style id="export-overlay-style">
+                        .export-overlay{position:fixed;z-index:20000;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center}
+                        .export-overlay .card{min-width:260px;padding:20px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.2);background:#fff;text-align:center}
+                        .export-overlay .spinner{font-size:28px;margin-bottom:10px}
+                        .export-overlay .msg{color:#007bff;font-weight:600}
+                        </style>
+                    `);
+                }
+
+                // show overlay
+                if (!$('.export-overlay').length) {
+                    const overlay = `<div class="export-overlay"><div class="card"><div class="spinner"><i class="fas fa-circle-notch fa-spin text-primary"></i></div><div class="msg">正在生成 Excel，下载完成后会自动关闭</div></div></div>`;
+                    $('body').append(overlay);
+                }
+                if (window.toastr) toastr.info('正在生成 Excel，请稍候...', '', { timeOut: 0, extendedTimeOut: 0, closeButton: false, progressBar: true });
+
+                // Use fetch with FormData to POST and get blob — more reliable to detect completion
+                (async function () {
+                    try {
+                        const formData = new FormData();
+                        Object.keys(query).forEach(function (key) {
+                            formData.append(key, query[key] || '');
+                        });
+
+                        const resp = await fetch(exportUrl, {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'same-origin'
+                        });
+
+                        if (!resp.ok) {
+                            // server returned error page
+                            if (window.toastr) {
+                                toastr.clear();
+                                toastr.error('导出失败：服务器返回错误');
+                            } else {
+                                alert('导出失败：服务器返回错误');
+                            }
+                            $('.export-overlay').remove();
+                            $btn.prop('disabled', false).html(originalHtml);
+                            return;
+                        }
+
+                        const blob = await resp.blob();
+                        // get filename from header if present
+                        const disposition = resp.headers.get('Content-Disposition') || resp.headers.get('content-disposition');
+                        let filename = '';
+                        if (disposition) {
+                            const match = /filename\*=UTF-8''([^;]+)/i.exec(disposition) || /filename="?([^";]+)"?/i.exec(disposition);
+                            if (match && match[1]) {
+                                filename = decodeURIComponent(match[1]);
+                            }
+                        }
+                        if (!filename) {
+                            // fallback name
+                            const now = new Date();
+                            filename = certificateTypeName + '_导出_' + now.toISOString().slice(0,10) + '.xlsx';
+                        }
+
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+
+                        if (window.toastr) {
+                            toastr.clear();
+                            toastr.success('Excel 已生成，下载已开始');
+                        }
+
+                    } catch (err) {
+                        console.error(err);
+                        if (window.toastr) {
+                            toastr.clear();
+                            toastr.error('导出失败，请稍后重试');
+                        } else {
+                            alert('导出失败，请稍后重试');
+                        }
+                    } finally {
+                        $('.export-overlay').remove();
+                        $btn.prop('disabled', false).html(originalHtml);
+                    }
+                })();
+            });
+
+            $('#exportWordBtn').on('click', function () {
+                const exportUrl = getWordExportUrl();
+                if (!exportUrl) {
+                    if (window.toastr) toastr.warning('当前证书类型暂不支持导出Word');
+                    else alert('当前证书类型暂不支持导出Word');
+                    return;
+                }
+
+                const query = buildExportQuery();
+                const $btn = $(this);
+                const originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 导出中...');
+
+                // append overlay style once (reuse same style as Excel)
+                if (!$('#export-overlay-style').length) {
+                    $('head').append(`
+                        <style id="export-overlay-style">
+                        .export-overlay{position:fixed;z-index:20000;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center}
+                        .export-overlay .card{min-width:260px;padding:20px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.2);background:#fff;text-align:center}
+                        .export-overlay .spinner{font-size:28px;margin-bottom:10px}
+                        .export-overlay .msg{color:#007bff;font-weight:600}
+                        </style>
+                    `);
+                }
+
+                // show overlay
+                if (!$('.export-overlay').length) {
+                    const overlay = `<div class="export-overlay"><div class="card"><div class="spinner"><i class="fas fa-circle-notch fa-spin text-primary"></i></div><div class="msg">正在生成 Word，下载完成后会自动关闭</div></div></div>`;
+                    $('body').append(overlay);
+                }
+                if (window.toastr) toastr.info('正在生成 Word，请稍候...', '', { timeOut: 0, extendedTimeOut: 0, closeButton: false, progressBar: true });
+
+                (async function () {
+                    try {
+                        const formData = new FormData();
+                        Object.keys(query).forEach(function (key) {
+                            formData.append(key, query[key] || '');
+                        });
+
+                        const resp = await fetch(exportUrl, {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'same-origin'
+                        });
+
+                        if (!resp.ok) {
+                            if (window.toastr) {
+                                toastr.clear();
+                                toastr.error('Word导出失败：服务器返回错误');
+                            } else {
+                                alert('Word导出失败：服务器返回错误');
+                            }
+                            return;
+                        }
+
+                        const blob = await resp.blob();
+                        const disposition = resp.headers.get('Content-Disposition') || resp.headers.get('content-disposition');
+                        let filename = '';
+                        if (disposition) {
+                            const match = /filename\*=UTF-8''([^;]+)/i.exec(disposition) || /filename="?([^";]+)"?/i.exec(disposition);
+                            if (match && match[1]) {
+                                filename = decodeURIComponent(match[1]);
+                            }
+                        }
+                        if (!filename) {
+                            const now = new Date();
+                            filename = certificateTypeName + '_名单_' + now.toISOString().slice(0, 10) + '.docx';
+                        }
+
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+
+                        if (window.toastr) {
+                            toastr.clear();
+                            toastr.success('Word 已生成，下载已开始');
+                        }
+
+                    } catch (err) {
+                        console.error(err);
+                        if (window.toastr) {
+                            toastr.clear();
+                            toastr.error('Word导出失败，请稍后重试');
+                        } else {
+                            alert('Word导出失败，请稍后重试');
+                        }
+                    } finally {
+                        $('.export-overlay').remove();
+                        $btn.prop('disabled', false).html(originalHtml);
+                    }
+                })();
             });
 
             // pdf modal print button (record actual print for batch mode)

@@ -15,4 +15,13 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Spire.XLS">
+      <HintPath>..\CertificateSystem.Web\spiredll\Spire.XLS.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.Doc">
+      <HintPath>..\CertificateSystem.Web\spiredll\Spire.Doc.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

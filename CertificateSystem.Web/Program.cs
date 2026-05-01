@@ -80,8 +80,11 @@ builder.Services.AddScoped<IOraclePaperRepository>(_ => new OraclePaperRepositor
 builder.Services.AddScoped<ISecurityLogRepository, SecurityLogRepository>();
 builder.Services.AddScoped<IDataScopeService, DataScopeService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddScoped<IStudentPaperRepository, StudentPaperRepository>();
 builder.Services.AddScoped<IStudentSyncService, StudentSyncService>();
 builder.Services.AddScoped<IPaperSyncService, PaperSyncService>();
+builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
+builder.Services.AddScoped<IWordExportService, WordExportService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<ICertificateGenerator, CertificateGenerator>();
 builder.Services.AddSingleton<IBatchPrintQueue, MemoryBatchPrintQueue>();

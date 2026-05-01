@@ -58,7 +58,7 @@ namespace CertificateSystem.Web.Data
             var adminRole = await roleManager.FindByNameAsync("Admin");
             if (adminRole != null)
             {
-                var permissionCodes = new[] { "SecurityLog.View", "DataSync.View" };
+                var permissionCodes = new[] { "SecurityLog.View", "DataSync.View", "Certificate.Graduation.Export", "Certificate.Completion.Export", "Certificate.Degree.Export", "Certificate.SecondDegree.Export", "Certificate.Degree.ExportWord", "Certificate.SecondDegree.ExportWord" };
                 var permissions = await dbContext.Permissions.Where(x => permissionCodes.Contains(x.Code)).ToListAsync();
                 foreach (var permission in permissions)
                 {

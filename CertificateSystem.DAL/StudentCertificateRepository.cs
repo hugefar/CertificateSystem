@@ -36,7 +36,7 @@ namespace CertificateSystem.DAL
             var countSql = $"SELECT COUNT(1) FROM dbo.StudentCertificates {whereSql}";
 
             var pageSql = $@"
-SELECT Id, CertificateType, GraduationYear, GraduationYearName, Institute, Major, ClassName, StudentId, Name, Gender,
+SELECT Id, CertificateType, GraduationYear, Grade, GraduationYearName, InstituteCode, Institute, MajorCode, Major, ClassName, StudentId, Name, Gender,
        Nation, PoliticalStatus, IdCardType, IdCardNo, ExamNo, StudyMode,
        BirthDate, EnrollmentDate, GraduationDate, GraduationConclusion, StudyYears, EducationLevel,
        CertificateNumber, CertificateDate, PhotoPath, IsDegreeAwarded, AwardedDegree, DegreeCertificateNumber,
@@ -85,7 +85,7 @@ FETCH NEXT @PageSize ROWS ONLY";
         public async Task<StudentCertificate> GetByIdAsync(long id)
         {
             const string sql = @"
-SELECT Id, CertificateType, GraduationYear, GraduationYearName, Institute, Major, ClassName, StudentId, Name, Gender,
+SELECT Id, CertificateType, GraduationYear, Grade, GraduationYearName, InstituteCode, Institute, MajorCode, Major, ClassName, StudentId, Name, Gender,
        Nation, PoliticalStatus, IdCardType, IdCardNo, ExamNo, StudyMode,
        BirthDate, EnrollmentDate, GraduationDate, GraduationConclusion, StudyYears, EducationLevel,
        CertificateNumber, CertificateDate, PhotoPath, IsDegreeAwarded, AwardedDegree, DegreeCertificateNumber,
@@ -116,7 +116,7 @@ WHERE Id = @Id";
 
             var topSql = top.HasValue && top.Value > 0 ? "TOP (@Top)" : string.Empty;
             var sql = $@"
-SELECT {topSql} Id, CertificateType, GraduationYear, GraduationYearName, Institute, Major, ClassName, StudentId, Name, Gender,
+SELECT {topSql} Id, CertificateType, GraduationYear, Grade, GraduationYearName, InstituteCode, Institute, MajorCode, Major, ClassName, StudentId, Name, Gender,
        Nation, PoliticalStatus, IdCardType, IdCardNo, ExamNo, StudyMode,
        BirthDate, EnrollmentDate, GraduationDate, GraduationConclusion, StudyYears, EducationLevel,
        CertificateNumber, CertificateDate, PhotoPath, IsDegreeAwarded, AwardedDegree, DegreeCertificateNumber,
@@ -396,8 +396,11 @@ WHERE Id = @Id";
                 Id = Convert.ToInt64(reader["Id"]),
                 CertificateType = reader["CertificateType"]?.ToString() ?? string.Empty,
                 GraduationYear = reader["GraduationYear"]?.ToString() ?? string.Empty,
+                Grade = reader["Grade"] == DBNull.Value ? string.Empty : reader["Grade"].ToString() ?? string.Empty,
                 GraduationYearName = reader["GraduationYearName"] == DBNull.Value ? null : reader["GraduationYearName"].ToString(),
+                InstituteCode = reader["InstituteCode"] == DBNull.Value ? string.Empty : reader["InstituteCode"].ToString() ?? string.Empty,
                 Institute = reader["Institute"]?.ToString() ?? string.Empty,
+                MajorCode = reader["MajorCode"] == DBNull.Value ? string.Empty : reader["MajorCode"].ToString() ?? string.Empty,
                 Major = reader["Major"]?.ToString() ?? string.Empty,
                 ClassName = reader["ClassName"]?.ToString() ?? string.Empty,
                 StudentId = reader["StudentId"]?.ToString() ?? string.Empty,

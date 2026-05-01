@@ -20,6 +20,8 @@ namespace CertificateSystem.Web.Controllers
         private readonly IBatchPrintQueue _batchPrintQueue;
         private readonly IPrintRecordService _printRecordService;
         private readonly ILogService _logService;
+        private readonly IExcelExportService _excelExportService;
+        private readonly IWordExportService _wordExportService;
 
         // Use the permission codes already seeded in the Permissions table (e.g. "Certificate.Graduation")
         // For now treat the same permission as both view and print to keep behavior consistent with seeded data.
@@ -39,7 +41,9 @@ namespace CertificateSystem.Web.Controllers
             ILogger<CertificateController> logger,
             IBatchPrintQueue batchPrintQueue,
             IPrintRecordService printRecordService,
-            ILogService logService)
+            ILogService logService,
+            IExcelExportService excelExportService,
+            IWordExportService wordExportService)
         {
             _certificateService = certificateService;
             _certificateGenerator = certificateGenerator;
@@ -48,6 +52,8 @@ namespace CertificateSystem.Web.Controllers
             _batchPrintQueue = batchPrintQueue;
             _printRecordService = printRecordService;
             _logService = logService;
+            _excelExportService = excelExportService;
+            _wordExportService = wordExportService;
         }
 
         [HttpGet("GetGraduationYears")]
@@ -102,7 +108,7 @@ namespace CertificateSystem.Web.Controllers
                 return Forbid();
 
             ViewBag.Title = $"{cfg.TypeName}打印管理";
-            ViewBag.CertificateType = type.ToLowerInvariant();
+            ViewBag.CertificateType = type;
             ViewBag.CertificateTypeName = cfg.TypeName;
             return View("Index");
         }
@@ -123,6 +129,74 @@ namespace CertificateSystem.Web.Controllers
             query.CertificateType = cfg.TypeName; // Override with mapped type name to ensure correct filtering
             var data = await _certificateService.GetPagedListAsync(query);
             return Json(new { total = data.TotalCount, data = data.Items });
+        }
+
+        [HttpPost("ExportGraduation")]
+        [PermissionAuthorize("Certificate.Graduation.Export")]
+        public async Task<IActionResult> ExportGraduation(StudentCertificateQueryDto query)
+        {
+            query ??= new StudentCertificateQueryDto();
+            query.CertificateType = "毕业证书";
+            var bytes = await _excelExportService.ExportGraduationExcelAsync(query);
+            await WriteLogAsync("数据导出", "毕业证书", $"导出毕业证书Excel，筛选条件学号/姓名：{query.StudentIdOrName ?? string.Empty}");
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"毕业证书数据_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+
+        [HttpPost("ExportCompletion")]
+        [PermissionAuthorize("Certificate.Completion.Export")]
+        public async Task<IActionResult> ExportCompletion(StudentCertificateQueryDto query)
+        {
+            query ??= new StudentCertificateQueryDto();
+            query.CertificateType = "结业证书";
+            var bytes = await _excelExportService.ExportCompletionExcelAsync(query);
+            await WriteLogAsync("数据导出", "结业证书", $"导出结业证书Excel，筛选条件学号/姓名：{query.StudentIdOrName ?? string.Empty}");
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"结业证书数据_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+
+        [HttpPost("ExportDegree")]
+        [PermissionAuthorize("Certificate.Degree.Export")]
+        public async Task<IActionResult> ExportDegree(StudentCertificateQueryDto query)
+        {
+            query ??= new StudentCertificateQueryDto();
+            query.CertificateType = "学位证书";
+            var bytes = await _excelExportService.ExportDegreeExcelAsync(query);
+            await WriteLogAsync("数据导出", "学位证书", $"导出学位证书Excel，筛选条件学号/姓名：{query.StudentIdOrName ?? string.Empty}");
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"学位证书数据_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+
+        [HttpPost("ExportSecondDegree")]
+        [PermissionAuthorize("Certificate.SecondDegree.Export")]
+        public async Task<IActionResult> ExportSecondDegree(StudentCertificateQueryDto query)
+        {
+            query ??= new StudentCertificateQueryDto();
+            query.CertificateType = "第二学位证书";
+            var bytes = await _excelExportService.ExportSecondDegreeExcelAsync(query);
+            await WriteLogAsync("数据导出", "第二学位证书", $"导出第二学位证书Excel，筛选条件学号/姓名：{query.StudentIdOrName ?? string.Empty}");
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"第二学位证书数据_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+
+        [HttpPost("ExportDegreeWord")]
+        [PermissionAuthorize("Certificate.Degree.ExportWord")]
+        public async Task<IActionResult> ExportDegreeWord(StudentCertificateQueryDto query)
+        {
+            query ??= new StudentCertificateQueryDto();
+            query.CertificateType = "学位证书";
+            var students = await _certificateService.GetListByFilterAsync(query, null);
+            var bytes = _wordExportService.ExportDegreeWord(students);
+            await WriteLogAsync("数据导出", "学位证书", $"导出普通高等教育学士学位授予人员名单Word，筛选条件学号/姓名：{query.StudentIdOrName ?? string.Empty}");
+            return File(bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"学位授予名单_{DateTime.Now:yyyyMMdd}.docx");
+        }
+
+        [HttpPost("ExportSecondDegreeWord")]
+        [PermissionAuthorize("Certificate.SecondDegree.ExportWord")]
+        public async Task<IActionResult> ExportSecondDegreeWord(StudentCertificateQueryDto query)
+        {
+            query ??= new StudentCertificateQueryDto();
+            query.CertificateType = "第二学位证书";
+            var students = await _certificateService.GetListByFilterAsync(query, null);
+            var bytes = _wordExportService.ExportSecondDegreeWord(students);
+            await WriteLogAsync("数据导出", "第二学位证书", $"导出第二学士学位授予人员名单Word，筛选条件学号/姓名：{query.StudentIdOrName ?? string.Empty}");
+            return File(bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"第二学位授予名单_{DateTime.Now:yyyyMMdd}.docx");
         }
 
         [HttpGet("{type}/Preview/{id:long}")]
